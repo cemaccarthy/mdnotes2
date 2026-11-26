@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <!--
-  mdnotes — a markdown notes console for iPad  ·  v2.2
+  mdnotes — a markdown notes console for iPad  ·  v2.3
   ─────────────────────────────────────────────────────────────
   INSTALL (GitHub Pages + iPad Home Screen):
   1. Save this file as `index.html` in a GitHub repository.
@@ -494,7 +494,10 @@ mark{background:var(--hl);color:var(--hl-text);border-radius:3px;padding:0 2px;}
 #hl,#ta{position:absolute;inset:0;font-family:var(--mono);font-size:var(--fs);line-height:var(--lh);-webkit-text-size-adjust:100%;text-size-adjust:100%;font-kerning:none;font-synthesis:none;text-rendering:optimizeSpeed;letter-spacing:0;tab-size:2;font-variant-ligatures:none;white-space:pre-wrap;overflow-wrap:break-word;word-break:normal;}
 #hl{overflow:hidden;padding:0;pointer-events:none;z-index:1;color:var(--text);margin:0;}
 #lines{padding:16px calc(18px + var(--wfix)) 160px 0;will-change:transform;}
-#lines span{line-height:inherit;vertical-align:baseline;}
+/* styled runs (bold headings, italics, code…) may use font faces with slightly different
+   vertical metrics; zero line-height keeps them from enlarging a line beyond --lh, so every
+   line of the text layer is exactly as tall as the matching line in the textarea */
+#lines span{line-height:0;vertical-align:baseline;}
 .wprobe{position:absolute;left:0;top:0;visibility:hidden;pointer-events:none;z-index:-1;padding:0;margin:0;border:0;height:0;min-height:0;overflow:hidden;font-family:var(--mono);font-size:var(--fs);line-height:var(--lh);letter-spacing:0;tab-size:2;font-variant-ligatures:none;font-kerning:none;font-synthesis:none;text-rendering:optimizeSpeed;white-space:pre-wrap;overflow-wrap:break-word;word-break:normal;resize:none;appearance:none;-webkit-appearance:none;-webkit-text-size-adjust:100%;}
 div.wprobe{height:auto;}
 #ta{z-index:2;overflow-y:auto;-webkit-overflow-scrolling:touch;resize:none;border:none;border-radius:0;appearance:none;-webkit-appearance:none;background:transparent;caret-color:var(--accent);color:transparent;-webkit-text-fill-color:transparent;padding:16px 18px 160px calc(var(--gw) + 22px);overscroll-behavior:contain;}
@@ -746,7 +749,7 @@ body.is-focus #focusExit.show{opacity:1;pointer-events:auto;}
 <div id="app" data-mode="write" class="sb-closed">
   <aside id="sidebar" aria-label="Notes and folders">
     <div class="sb-top">
-      <div class="brand"><span class="pr">❯</span>mdnotes<span class="cursor">▍</span><span class="ver">v2.2</span></div>
+      <div class="brand"><span class="pr">❯</span>mdnotes<span class="cursor">▍</span><span class="ver">v2.3</span></div>
       <button id="sbClose" class="ib" aria-label="Close sidebar"></button>
     </div>
     <div class="sb-tools">
@@ -928,7 +931,7 @@ body.is-focus #focusExit.show{opacity:1;pointer-events:auto;}
     <button class="menu-row" id="setExportPDF" type="button"><span id="setPdfIco"></span><span class="mlab">Export all notes as PDF</span></button>
     <div class="pop-div"></div>
     <button class="menu-row" id="setReset" type="button"><span id="setResetIco"></span><span class="mlab">Reset preferences</span></button>
-    <div class="pop-foot" id="setStats">mdnotes v2.2 · stored on this device</div>
+    <div class="pop-foot" id="setStats">mdnotes v2.3 · stored on this device</div>
   </div>
 </div>
 <div id="popNote" class="pop" hidden></div>
@@ -4273,7 +4276,7 @@ function updateStats(){
   const kb=(new Blob([JSON.stringify(notes)]).size/1024).toFixed(1);
   $("storeStats").textContent=`${notes.length} notes · ${folders.length} folders · ${kb} KB`;
   const mb=(imgBytes()/1048576).toFixed(1);
-  $("setStats").textContent=`mdnotes v2.2 · ${notes.length} notes · ${folders.length} folders · ${kb} KB text · ${IMG.size} images (${mb} MB)`;
+  $("setStats").textContent=`mdnotes v2.3 · ${notes.length} notes · ${folders.length} folders · ${kb} KB text · ${IMG.size} images (${mb} MB)`;
 }
 function updateCounts(){
   const v=ta.value,w=(v.match(/\S+/g)||[]).length;
