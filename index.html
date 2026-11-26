@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <!--
-  mdnotes — a markdown notes console for iPad  ·  v2.4
+  mdnotes — a markdown notes console for iPad  ·  v2.5
   ─────────────────────────────────────────────────────────────
   INSTALL (GitHub Pages + iPad Home Screen):
   1. Save this file as `index.html` in a GitHub repository.
@@ -773,7 +773,7 @@ body.is-focus #focusExit.show{opacity:1;pointer-events:auto;}
 <div id="app" data-mode="write" class="sb-closed">
   <aside id="sidebar" aria-label="Notes and folders">
     <div class="sb-top">
-      <div class="brand"><span class="pr">❯</span>mdnotes<span class="cursor">▍</span><span class="ver">v2.4</span></div>
+      <div class="brand"><span class="pr">❯</span>mdnotes<span class="cursor">▍</span><span class="ver">v2.5</span></div>
       <button id="sbClose" class="ib" aria-label="Close sidebar"></button>
     </div>
     <div class="sb-tools">
@@ -955,7 +955,7 @@ body.is-focus #focusExit.show{opacity:1;pointer-events:auto;}
     <button class="menu-row" id="setExportPDF" type="button"><span id="setPdfIco"></span><span class="mlab">Export all notes as PDF</span></button>
     <div class="pop-div"></div>
     <button class="menu-row" id="setReset" type="button"><span id="setResetIco"></span><span class="mlab">Reset preferences</span></button>
-    <div class="pop-foot" id="setStats">mdnotes v2.4 · stored on this device</div>
+    <div class="pop-foot" id="setStats">mdnotes v2.5 · stored on this device</div>
   </div>
 </div>
 <div id="popNote" class="pop" hidden></div>
@@ -4387,7 +4387,7 @@ function updateStats(){
   const kb=(new Blob([JSON.stringify(notes)]).size/1024).toFixed(1);
   $("storeStats").textContent=`${notes.length} notes · ${folders.length} folders · ${kb} KB`;
   const mb=(imgBytes()/1048576).toFixed(1);
-  $("setStats").textContent=`mdnotes v2.4 · ${notes.length} notes · ${folders.length} folders · ${kb} KB text · ${IMG.size} images (${mb} MB)`;
+  $("setStats").textContent=`mdnotes v2.5 · ${notes.length} notes · ${folders.length} folders · ${kb} KB text · ${IMG.size} images (${mb} MB)`;
 }
 function updateCounts(){
   const v=ta.value,w=(v.match(/\S+/g)||[]).length;
