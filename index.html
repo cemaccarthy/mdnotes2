@@ -361,6 +361,14 @@ input,select,textarea{font-family:var(--mono);color:var(--text);}
 svg{display:block;width:18px;height:18px;flex:none;}
 kbd{font-family:var(--mono);font-size:10px;color:var(--muted);border:1px solid var(--border);border-bottom-width:2px;border-radius:4px;padding:1px 5px;background:var(--raised);}
 mark{background:var(--hl);color:var(--hl-text);border-radius:3px;padding:0 2px;}
+/* coloured highlights: ==<red>word== etc. (plain ==word== stays yellow) */
+.hl-yellow{--hl:#ffe14d;--hl-text:#191300;--hl-ink:#e0b800;}
+.hl-red{--hl:#ff8f87;--hl-text:#2b0503;--hl-ink:#ff5a4f;}
+.hl-orange{--hl:#ffb766;--hl-text:#2a1300;--hl-ink:#ff9a2e;}
+.hl-green{--hl:#94e2a0;--hl-text:#032010;--hl-ink:#3fbf5f;}
+.hl-blue{--hl:#8cc4ff;--hl-text:#021a36;--hl-ink:#3f95ff;}
+.hl-purple{--hl:#cfa8ff;--hl-text:#1d0638;--hl-ink:#a066f5;}
+.tk-mt{color:var(--hl-ink,var(--syn-punc));opacity:.85;}
 .spacer{flex:1;}
 ::-webkit-scrollbar{width:10px;height:10px;}
 ::-webkit-scrollbar-track{background:transparent;}
@@ -2810,7 +2818,7 @@ function rel(t){
   return dt.toLocaleDateString(undefined,opt);
 }
 const stripMd=s=>s
-  .replace(/==([^=]+)==/g,"$1")
+  .replace(/==(?:<(?:yellow|red|orange|green|blue|purple)>)?([^=]+)==/gi,"$1")
   .replace(/!\[([^\]]*)\]\([^)]*\)/g,"$1").replace(/\[([^\]]*)\]\([^)]*\)/g,"$1")
   .replace(/^#{1,6}\s+/,"").replace(/^\s*(?:>\s?)+/,"").replace(/^\s*(?:[-*+]|\d+[.)])\s+(?:\[[ xX]\]\s+)?/,"")
   .replace(/[*_~`]/g,"").replace(/\s+/g," ").trim();
@@ -2960,7 +2968,7 @@ function seedData(){
     "## Try it now",
     "- [x] Open mdnotes",
     "- [ ] Switch to **Read** and tick this box *from the preview*",
-    "- [ ] Highlight with `==words==`, underline with `~~words~~`",
+    "- [ ] Highlight with `==words==` (yellow) or pick a colour: `==<red>words==`, `==<orange>…==`, `==<green>…==`, `==<blue>…==`, `==<purple>…==` — underline with `~~words~~`",
     "- [ ] Tap `![]()` to add a photo, or paste one straight in",
     "- [ ] Open ⚙ Settings → Appearance: try **Paper**, **Latte** or **Dawn**, then pick a typeface like ==JetBrains Mono== or ==VT323==",
     "- [ ] Export this note as a PDF from its ⋯ menu","",
@@ -2983,6 +2991,8 @@ function seedData(){
     "| `*italic*` | *italic* |",
     "| `~~underline~~` | ~~underline~~ |",
     "| `==highlight==` | ==highlight== |",
+    "| `==<red>red==` `==<orange>orange==` `==<green>green==` | ==<red>red== ==<orange>orange== ==<green>green== |",
+    "| `==<blue>blue==` `==<purple>purple==` `==<yellow>yellow==` | ==<blue>blue== ==<purple>purple== ==<yellow>yellow== |",
     "| `` `code` `` | `code` |","",
     "## Lists","",
     "1. Ordered items",
@@ -3242,6 +3252,8 @@ function typeSfx(){
 }
 
 /* ============================== MARKDOWN: EDITOR HIGHLIGHT ============================== */
+const HL_COLORS=["yellow","red","orange","green","blue","purple"];
+const HL_TAG_RX=/^(?:&lt;|<)(yellow|red|orange|green|blue|purple)(?:&gt;|>)/i;
 const E_RX=/(`[^`\n]+`)|(!?\[[^\]\n]*\]\([^)\n]*\))|(\*\*\*[^*\n]+\*\*\*)|(\*\*[^*\n]+\*\*)|(\*[^*\n]+\*)|(~~[^~\n]+~~)|(==[^=\n]+==)|(https?:\/\/[^\s<>()]+)/g;
 function inl(escaped){
   return escaped.replace(E_RX,(m,code,link,bi,b,i,u,mk,url)=>{
@@ -3256,7 +3268,14 @@ function inl(escaped){
     if(b)return p(m.slice(0,2))+`<span class="tk-b">${m.slice(2,-2)}</span>`+p(m.slice(0,2));
     if(i)return p("*")+`<span class="tk-i">${m.slice(1,-1)}</span>`+p("*");
     if(u)return p("~~")+`<span class="tk-u">${m.slice(2,-2)}</span>`+p("~~");
-    if(mk)return p("==")+`<span class="tk-m">${m.slice(2,-2)}</span>`+p("==");
+    if(mk){
+      const body=m.slice(2,-2),t=body.match(HL_TAG_RX);
+      if(t&&t[0].length<body.length){
+        const c=t[1].toLowerCase();
+        return p("==")+`<span class="tk-mt hl-${c}">${t[0]}</span><span class="tk-m hl-${c}">${body.slice(t[0].length)}</span>`+p("==");
+      }
+      return p("==")+`<span class="tk-m">${body}</span>`+p("==");
+    }
     if(url)return`<span class="tk-url">${url}</span>`;
     return m;
   });
@@ -3543,7 +3562,11 @@ function inlR(text){
   s=s.replace(/(^|[^\w])__([^_\n]+)__(?!\w)/g,"$1<strong>$2</strong>");
   s=s.replace(/(^|[^\w])_([^_\n]+)_(?!\w)/g,"$1<em>$2</em>");
   s=s.replace(/~~([^~\n]+)~~/g,"<u>$1</u>");
-  s=s.replace(/==([^=\n]+)==/g,"<mark>$1</mark>");
+  s=s.replace(/==([^=\n]+)==/g,(m,body)=>{
+    const t=body.match(HL_TAG_RX);
+    if(t&&t[0].length<body.length)return`<mark class="hl-${t[1].toLowerCase()}">${body.slice(t[0].length)}</mark>`;
+    return`<mark>${body}</mark>`;
+  });
   let guard=0;
   while(/\x00\d+\x00/.test(s)&&guard++<10)s=s.replace(/\x00(\d+)\x00/g,(m,d)=>toks[+d]);
   return s;
@@ -3926,6 +3949,7 @@ function measure(str,kind,size,bold,italic){
 }
 
 /* ---------- colours ---------- */
+const PDF_HL={red:"#ffc4bf",orange:"#ffd9ad",green:"#c4eec9",blue:"#c8e1ff",purple:"#e4d2ff"};
 function hex2pdf(h){
   h=String(h||"#000000").replace("#","");
   if(h.length===3)h=h.split("").map(c=>c+c).join("");
@@ -3992,7 +4016,7 @@ function drawLineAt(doc,line,x,base,size,color,jw){
   let cx=x;
   for(const r of line){
     const w=measure(r.t,r.kind,r.size,r.b,r.i)+extra*spaceCount(r.t);
-    if(r.mark)doc.rect(cx,base-r.size*.22,w,r.size*1.08,S.hl);
+    if(r.mark)doc.rect(cx,base-r.size*.22,w,r.size*1.08,r.markFill||S.hl);
     else if(r.code)doc.rect(cx-1,base-r.size*.22,w+2,r.size*1.08,S.codeBg);
     cx+=w;
   }
@@ -4028,7 +4052,7 @@ function runsFromNode(node,style,out){
     if(tag==="STRONG"||tag==="B"){s.b=true;if(S.bold)s.color=S.bold;}
     if(tag==="EM"||tag==="I"){s.i=true;if(S.italic)s.color=S.italic;}
     if(tag==="U")s.u=true;
-    if(tag==="MARK")s.mark=true;
+    if(tag==="MARK"){s.mark=true;const c=(ch.className.match(/\bhl-(\w+)/)||[])[1];s.markFill=c&&PDF_HL[c]?hex2pdf(PDF_HL[c]):null;}
     if(tag==="CODE"){s.kind="mono";s.code=true;s.size=Math.max(7,(s.size||PDFX.bodySize)*.9);}
     if(tag==="A"){s.link=true;if(S.link)s.color=S.link;}
     if(tag==="SPAN"&&ch.classList.contains("img-missing")){out.push({t:"[image missing]",...s,color:S.gray});continue;}
