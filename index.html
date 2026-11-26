@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <!--
-  mdnotes — a markdown notes console for iPad  ·  v2.6
+  mdnotes — a markdown notes console for iPad  ·  v2.7
   ─────────────────────────────────────────────────────────────
   INSTALL (GitHub Pages + iPad Home Screen):
   1. Save this file as `index.html` in a GitHub repository.
@@ -576,7 +576,7 @@ div.wprobe{height:auto;}
 .nm-dv{color:var(--syn-str);}
 /* CRT themes stay monochrome: nomnoml text takes the plain text colour */
 html[data-group="crt"] .nm{color:inherit;font-weight:inherit;font-style:inherit;}
-#previewPane{flex:1;min-width:0;overflow-y:auto;overscroll-behavior:contain;padding:24px 26px 140px;}
+#previewPane{flex:1;min-width:0;overflow-y:auto;overscroll-behavior:contain;padding:24px max(16px,calc(var(--read-margin,12) * 1%)) 140px;}
 #app[data-mode="write"] #previewPane{display:none;}
 #app[data-mode="read"] #editorPane{display:none;}
 #app[data-mode="read"] #formatbar{display:none;}
@@ -594,7 +594,7 @@ html[data-group="crt"] .nm{color:inherit;font-weight:inherit;font-style:inherit;
 
 /* ---------- rendered markdown · monotone document ---------- */
 .md{max-width:780px;margin:0 auto;font-size:var(--fs);line-height:1.7;color:var(--text);}
-#app[data-mode="read"] .md{max-width:760px;}
+#app[data-mode="read"] .md{max-width:none;}
 .md h1,.md h2,.md h3,.md h4,.md h5,.md h6{color:var(--text);line-height:1.35;margin:1.3em 0 .5em;font-weight:700;}
 .md h1:first-child,.md h2:first-child{margin-top:.1em;}
 .md h1{font-size:1.65em;border-bottom:1px solid var(--border);padding-bottom:.3em;}
@@ -641,6 +641,9 @@ html[data-group="crt"] .nm{color:inherit;font-weight:inherit;font-style:inherit;
 .md th{background:var(--raised);color:var(--text);font-weight:700;}
 .md tr:nth-child(even) td{background:var(--raised);}
 .md img{max-width:100%;border-radius:8px;border:1px solid var(--border);margin:.4em 0;}
+/* an image on its own line: centred, sized by Editor → Image size (never enlarged past its own size) */
+.md img.md-img{display:block;margin:.6em auto;height:auto;}
+.md p.img-p{text-align:center;}
 .img-missing{display:inline-block;font-size:.85em;color:var(--muted);border:1px dashed var(--border);border-radius:6px;padding:2px 9px;}
 .pv-empty{color:var(--muted);font-style:italic;}
 
@@ -754,7 +757,7 @@ input[type="range"]::-moz-range-thumb{width:14px;height:14px;border-radius:50%;b
 #app.focus .ln::before{display:none;}
 #app.focus #lines{padding:56px calc(28px + var(--wfix)) 45vh 0;}
 #app.focus #ta{padding:56px 28px 45vh 28px;}
-#app.focus #previewPane{padding:56px 28px 30vh;}
+#app.focus #previewPane{padding:56px max(16px,calc(var(--read-margin,12) * 1%)) 30vh;}
 #focusExit{position:fixed;z-index:130;top:calc(env(safe-area-inset-top) + 12px);right:calc(env(safe-area-inset-right) + 12px);width:38px;height:38px;display:none;align-items:center;justify-content:center;border-radius:10px;background:var(--raised);border:1px solid var(--border);color:var(--muted);opacity:0;pointer-events:none;transition:opacity .25s,color .15s,border-color .15s;box-shadow:0 6px 20px rgba(0,0,0,.25);}
 #focusExit svg{width:17px;height:17px;}
 #focusExit:hover{color:var(--accent);border-color:var(--accent);}
@@ -775,7 +778,7 @@ body.is-focus #focusExit.show{opacity:1;pointer-events:auto;}
   #stTheme,#stChars,.st-left .st-sep:last-of-type{display:none;}
   #topbar{gap:4px;padding:0 8px;}
   .ib{width:33px;height:33px;}
-  #previewPane{padding:18px 16px 120px;}
+  #previewPane{padding:18px max(16px,calc(var(--read-margin,12) * 1%)) 120px;}
   .searchwrap kbd{display:none;}
 }
 @media (hover:none){ .searchwrap kbd{display:none;} }
@@ -789,7 +792,7 @@ body.is-focus #focusExit.show{opacity:1;pointer-events:auto;}
 <div id="app" data-mode="write" class="sb-closed">
   <aside id="sidebar" aria-label="Notes and folders">
     <div class="sb-top">
-      <div class="brand"><span class="pr">❯</span>mdnotes<span class="cursor">▍</span><span class="ver">v2.6</span></div>
+      <div class="brand"><span class="pr">❯</span>mdnotes<span class="cursor">▍</span><span class="ver">v2.7</span></div>
       <button id="sbClose" class="ib" aria-label="Close sidebar"></button>
     </div>
     <div class="sb-tools">
@@ -929,7 +932,11 @@ body.is-focus #focusExit.show{opacity:1;pointer-events:auto;}
     <div class="pop-title">EDITOR</div>
     <div class="set-row"><span class="slab">Font size</span><input type="range" id="setSize" min="13" max="22" step="1" value="15"><span class="sval" id="setSizeVal">15px</span></div>
     <div class="set-row"><span class="slab">Line numbers</span><label class="switch"><input type="checkbox" id="setLn" checked><i></i></label></div>
+    <div class="pop-title">READING</div>
+    <div class="set-row"><span class="slab">Image size</span><input type="range" id="setImg" min="20" max="100" step="5" value="100"><span class="sval" id="setImgVal">100%</span></div>
     <div class="set-row"><span class="slab">Diagram size</span><input type="range" id="setNn" min="20" max="100" step="5" value="50"><span class="sval" id="setNnVal">50%</span></div>
+    <div class="set-row"><span class="slab">Page margins</span><input type="range" id="setMargin" min="0" max="30" step="1" value="12"><span class="sval" id="setMarginVal">12%</span></div>
+    <div class="pop-title">DISPLAY</div>
     <div class="set-row"><span class="slab">CRT effects</span><label class="switch"><input type="checkbox" id="setCrt" checked><i></i></label></div>
     <div class="pop-title">SOUND</div>
     <div class="set-row"><span class="slab">Interface sounds</span><label class="switch"><input type="checkbox" id="setSnd" checked><i></i></label></div>
@@ -960,10 +967,12 @@ body.is-focus #focusExit.show{opacity:1;pointer-events:auto;}
     <div class="pop-title">CONTENT</div>
     <div class="set-row"><span class="slab">Code blocks</span><span class="selwrap"><select id="pdfCode" class="libsel"><option value="shaded">Shaded</option><option value="bar">Shaded + bar</option><option value="plain">Plain</option></select></span></div>
     <div class="set-row"><span class="slab">Render nomnoml diagrams</span><label class="switch"><input type="checkbox" id="pdfNomnoml"><i></i></label></div>
+    <div class="set-row"><span class="slab">Image size</span><input type="range" id="pdfImg" min="20" max="100" step="5" value="100"><span class="sval" id="pdfImgVal">100%</span></div>
+    <div class="set-row"><span class="slab">Diagram size</span><input type="range" id="pdfNn" min="20" max="100" step="5" value="50"><span class="sval" id="pdfNnVal">50%</span></div>
     <div class="set-row"><span class="slab">Line under main title</span><label class="switch"><input type="checkbox" id="pdfRule"><i></i></label></div>
     <div class="set-row"><span class="slab">Footer text</span><label class="switch"><input type="checkbox" id="pdfFooter"><i></i></label></div>
     <div class="set-row"><span class="slab">Page numbers</span><label class="switch"><input type="checkbox" id="pdfNums"><i></i></label></div>
-    <div class="pop-foot">Extra fonts are embedded when you export (first use needs a connection, then they work offline). Diagram size follows Editor → Diagram size.</div>
+    <div class="pop-foot">Extra fonts are embedded when you export (first use needs a connection, then they work offline). Image and diagram sizes here only affect PDFs; Editor → Reading sets them on screen. Images and diagrams are centred on the page.</div>
   </div>
   <div id="setLibrary" hidden>
     <div class="pop-title">IMPORT / EXPORT</div>
@@ -972,7 +981,7 @@ body.is-focus #focusExit.show{opacity:1;pointer-events:auto;}
     <button class="menu-row" id="setExportPDF" type="button"><span id="setPdfIco"></span><span class="mlab">Export all notes as PDF</span></button>
     <div class="pop-div"></div>
     <button class="menu-row" id="setReset" type="button"><span id="setResetIco"></span><span class="mlab">Reset preferences</span></button>
-    <div class="pop-foot" id="setStats">mdnotes v2.6 · stored on this device</div>
+    <div class="pop-foot" id="setStats">mdnotes v2.7 · stored on this device</div>
   </div>
 </div>
 <div id="popNote" class="pop" hidden></div>
@@ -2953,7 +2962,7 @@ function ensureWebFonts(){
 
 /* ============================== STATE ============================== */
 const KEY="mdnotes.v1",OLD_KEY="mdterm.v1";
-const DEF_PREFS={theme:"midnight",mode:"write",fontSize:15,lineNumbers:true,crt:true,sound:true,type:false,sort:"edited",filter:"folder",font:"sf",lastFolder:null,pdfSize:"letter",pdfBody:"sans",nnSize:50,
+const DEF_PREFS={theme:"midnight",mode:"write",fontSize:15,lineNumbers:true,crt:true,sound:true,type:false,sort:"edited",filter:"folder",font:"sf",lastFolder:null,pdfSize:"letter",pdfBody:"sans",nnSize:50,imgSize:100,readMargin:12,pdfNnSize:50,pdfImgSize:100,
   pdfFont:"helv",pdfHeadFont:"same",pdfCodeFont:"courier",pdfFontSize:11,pdfLine:"normal",pdfMargin:"normal",pdfAlign:"left",pdfPaper:"white",pdfTheme:"none",pdfCustom:{head:"#1f2937",bold:"#b3261e",italic:"#5b6b8c",mark:"#ffe14d",link:"#0b6bcb"},pdfCode:"shaded",pdfRule:true,pdfNomnoml:true,pdfFooter:true,pdfNums:true};
 let notes=[],folders=[],activeId=null,prefs={...DEF_PREFS},storageOK=true;
 const ui={query:"",folderId:null,selectMode:false,selection:new Set(),sbOpen:window.innerWidth>=900,mode:"write",focus:false,setTab:"appearance"};
@@ -3110,6 +3119,8 @@ function load(){
       notes=(Array.isArray(d.notes)?d.notes:[]).map(normalizeNote);
       folders=(Array.isArray(d.folders)?d.folders:[]).map(f=>({id:String(f.id||uid()),name:String(f.name||"Folder"),parentId:f.parentId||null,created:+f.created||now()}));
       prefs={...DEF_PREFS,...(d.prefs||{})};
+      /* v2.7: PDF diagram size used to follow the on-screen one */
+      if(d.prefs&&d.prefs.nnSize!=null&&d.prefs.pdfNnSize==null)prefs.pdfNnSize=d.prefs.nnSize;
       if(migrated&&prefs.filter==="all")prefs.filter="folder";
       if(!["folder","all","pinned"].includes(prefs.filter))prefs.filter="folder";
       if(!["write","read"].includes(prefs.mode))prefs.mode="write";
@@ -3697,6 +3708,24 @@ function nnSizeSvg(sv){
   sv.style.width=pct+"%";
   sv.style.maxWidth=w?Math.round(w*pct/25)+"px":"none";
 }
+function imgSizeEl(im){
+  const pct=Math.min(100,Math.max(20,+prefs.imgSize||100));
+  im.style.width=pct+"%";
+  if(im.naturalWidth)im.style.maxWidth=Math.min(im.naturalWidth,100000)+"px";
+}
+function applyImgSize(){
+  document.querySelectorAll(".md img.md-img").forEach(imgSizeEl);
+}
+function prepImages(root){
+  /* images that sit on a line of their own become centred, resizable blocks */
+  root.querySelectorAll(".md img").forEach(im=>{
+    const p=im.parentElement;
+    if(!p||p.tagName!=="P"||p.children.length!==1||p.textContent.trim())return;
+    p.classList.add("img-p");im.classList.add("md-img");
+    imgSizeEl(im);
+    if(!im.complete)im.addEventListener("load",()=>imgSizeEl(im),{once:true});
+  });
+}
 function applyNnSize(){
   document.querySelectorAll(".md .cb.nn .nn-view svg").forEach(nnSizeSvg);
 }
@@ -4143,13 +4172,16 @@ async function drawImageBlock(doc,imgEl,x,w,o){
   try{
     const jpg=await toJpeg(src);
     const maxH=doc.H-doc.margin*2-20;
-    const scale=Math.min(w/jpg.w,maxH/jpg.h,1);
-    placeJpeg(doc,jpg,x,jpg.w*scale,jpg.h*scale,o);
+    /* PDF → Image size: a share of the text width, never enlarged past the image's own size */
+    const pct=Math.min(100,Math.max(20,+prefs.pdfImgSize||100));
+    const scale=Math.min(w*pct/100/jpg.w,maxH/jpg.h,1);
+    const dw=jpg.w*scale,dh=jpg.h*scale;
+    placeJpeg(doc,jpg,x+(w-dw)/2,dw,dh,o);
   }catch(e){
     doc.ensure(18);doc.text("[image unavailable]",x,doc.y-10,9,"F3",PDFX.sty.gray);doc.y-=18;
   }
 }
-/* nomnoml → SVG → high-res JPEG, placed with the same size rule as reading mode */
+/* nomnoml → SVG → high-res JPEG, sized by PDF → Diagram size with the same rule as reading mode, centred */
 async function drawNomnoml(doc,el,x,w,o){
   const code=((el.querySelector(".nn-src code")||{}).textContent)||"";
   if(!code.trim()||typeof nomnoml==="undefined")return false;
@@ -4168,12 +4200,12 @@ async function drawNomnoml(doc,el,x,w,o){
     const ctx=c.getContext("2d");ctx.fillStyle=S.paperHex;ctx.fillRect(0,0,cw,ch);ctx.drawImage(im,0,0,cw,ch);
     const url=c.toDataURL("image/jpeg",.93);
     const jpg={data:atob(url.split(",")[1]),w:cw,h:ch};
-    const pct=Math.min(100,Math.max(20,+prefs.nnSize||50));
+    const pct=Math.min(100,Math.max(20,+prefs.pdfNnSize||50));
     let dw=Math.min(w*pct/100,nw*(pct/25)*.75),dh=dw*nh/nw;
     const maxH=doc.H-doc.margin*2-20;
     if(dh>maxH){dh=maxH;dw=dh*nw/nh;}
     doc.y-=2;
-    placeJpeg(doc,jpg,x,dw,dh,o);
+    placeJpeg(doc,jpg,x+(w-dw)/2,dw,dh,o);
     doc.y-=4;
     return true;
   }catch(e){return false;}
@@ -4457,7 +4489,7 @@ function updateStats(){
   const kb=(new Blob([JSON.stringify(notes)]).size/1024).toFixed(1);
   $("storeStats").textContent=`${notes.length} notes · ${folders.length} folders · ${kb} KB`;
   const mb=(imgBytes()/1048576).toFixed(1);
-  $("setStats").textContent=`mdnotes v2.6 · ${notes.length} notes · ${folders.length} folders · ${kb} KB text · ${IMG.size} images (${mb} MB)`;
+  $("setStats").textContent=`mdnotes v2.7 · ${notes.length} notes · ${folders.length} folders · ${kb} KB text · ${IMG.size} images (${mb} MB)`;
 }
 function updateCounts(){
   const v=ta.value,w=(v.match(/\S+/g)||[]).length;
@@ -4555,6 +4587,7 @@ function renderPreview(){
   const st=previewPane.scrollTop;
   preview.innerHTML=n.content.trim()?renderMD(n.content,0):`<p class="pv-empty">Nothing to render yet — switch to Write.</p>`;
   renderNomnomlIn(preview);
+  prepImages(preview);
   previewPane.scrollTop=st;
 }
 function moveThumb(){
@@ -4643,10 +4676,30 @@ function downloadBlob(name,blob){
 }
 function download(name,text,type){downloadBlob(name,new Blob([text],{type}));}
 const slug=s=>s.toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,"")||"note";
-function exportNote(id){
+/* Standard markdown: drop the syntax only mdnotes understands, keep the words.
+   ==highlight== / ==<colour>highlight== → highlight, ~underline~ → underline.
+   ~~strikethrough~~ (GitHub-flavoured), code spans and code blocks are left untouched. */
+function toStandardMd(src){
+  let fence=null;
+  return src.split("\n").map(line=>{
+    const fm=line.match(/^\s*(`{3,}|~{3,})/);
+    if(fm){if(fence===null)fence=fm[1][0];else if(fm[1][0]===fence)fence=null;return line;}
+    if(fence!==null)return line;
+    return line.split(/(`[^`\n]*`)/).map((part,i)=>{
+      if(i%2)return part;   /* inline code */
+      return part
+        .replace(/==(?:<(?:yellow|red|orange|green|blue|purple)>)?([^=\n]+)==/gi,"$1")
+        .replace(/(^|[^~])~(?!~)([^~\n]+?)~(?!~)/g,"$1$2");
+    }).join("");
+  }).join("\n");
+}
+function exportNote(id,standard){
   const n=byId(id);if(!n)return;
-  download(slug(titleOf(n))+".md",resolveImgs(n.content),"text/markdown");
-  toast("Exported "+slug(titleOf(n))+".md",{kind:"ok",icon:IC.dl,dur:2500});
+  const name=slug(titleOf(n))+".md";
+  let text=resolveImgs(n.content);
+  if(standard)text=toStandardMd(text);
+  download(name,text,"text/markdown");
+  toast(`Exported ${name}${standard?" · standard markdown":""}`,{kind:"ok",icon:IC.dl,dur:2500});
 }
 async function copyText(text){
   try{await navigator.clipboard.writeText(text);return true;}
@@ -4921,7 +4974,8 @@ function buildNoteMenu(id){
     {ic:IC.folder,lab:"Move to folder…",fn:()=>buildMovePop([id],$("btnMore"))},
     {ic:IC.copy,lab:"Duplicate",fn:()=>duplicateNote(id)},
     {ic:IC.link,lab:"Copy markdown",fn:()=>copyNote(id)},
-    {ic:IC.dl,lab:"Export as .md",fn:()=>exportNote(id)},
+    {ic:IC.dl,lab:"Export as .md (all syntax)",fn:()=>exportNote(id,false)},
+    {ic:IC.dl,lab:"Export as standard .md",fn:()=>exportNote(id,true)},
     {ic:IC.pdf,lab:"Export as PDF",fn:()=>exportPDF([id])},
     {ic:IC.trash,lab:"Delete note",danger:true,fn:()=>removeNotes([id])}
   ];
@@ -4985,6 +5039,11 @@ function applyPrefs(){
   setEditorFontSize(prefs.fontSize);
   $("setSize").value=prefs.fontSize;$("setSizeVal").textContent=prefs.fontSize+"px";
   $("setNn").value=prefs.nnSize;$("setNnVal").textContent=prefs.nnSize+"%";applyNnSize();
+  $("setImg").value=prefs.imgSize;$("setImgVal").textContent=prefs.imgSize+"%";applyImgSize();
+  $("setMargin").value=prefs.readMargin;$("setMarginVal").textContent=prefs.readMargin+"%";
+  document.documentElement.style.setProperty("--read-margin",prefs.readMargin);
+  $("pdfImg").value=prefs.pdfImgSize;$("pdfImgVal").textContent=prefs.pdfImgSize+"%";
+  $("pdfNn").value=prefs.pdfNnSize;$("pdfNnVal").textContent=prefs.pdfNnSize+"%";
   editorPane.classList.toggle("no-ln",!prefs.lineNumbers);
   $("setLn").checked=prefs.lineNumbers;
   document.documentElement.classList.toggle("no-crt",!prefs.crt);
@@ -5406,6 +5465,18 @@ function wire(){
     $("setNnVal").textContent=prefs.nnSize+"%";
     applyNnSize();markDirty();
   });
+  $("setImg").addEventListener("input",e=>{
+    prefs.imgSize=+e.target.value;
+    $("setImgVal").textContent=prefs.imgSize+"%";
+    applyImgSize();markDirty();
+  });
+  $("setMargin").addEventListener("input",e=>{
+    prefs.readMargin=+e.target.value;
+    $("setMarginVal").textContent=prefs.readMargin+"%";
+    document.documentElement.style.setProperty("--read-margin",prefs.readMargin);markDirty();
+  });
+  $("pdfImg").addEventListener("input",e=>{prefs.pdfImgSize=+e.target.value;$("pdfImgVal").textContent=prefs.pdfImgSize+"%";markDirty();});
+  $("pdfNn").addEventListener("input",e=>{prefs.pdfNnSize=+e.target.value;$("pdfNnVal").textContent=prefs.pdfNnSize+"%";markDirty();});
   $("setLn").addEventListener("change",e=>{prefs.lineNumbers=e.target.checked;editorPane.classList.toggle("no-ln",!prefs.lineNumbers);if(activeNote())buildHighlight();markDirty();sfx("toggle");});
   $("setCrt").addEventListener("change",e=>{prefs.crt=e.target.checked;document.documentElement.classList.toggle("no-crt",!prefs.crt);markDirty();sfx("toggle");});
   $("setSnd").addEventListener("change",e=>{ensureAudio();prefs.sound=e.target.checked;syncSoundUI();markDirty();sfx("toggle");});
