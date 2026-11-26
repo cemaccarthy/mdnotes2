@@ -350,7 +350,7 @@ html.no-crt{--scan:0 !important;--glow:0 0 0 transparent !important;}
   --hl:#ffe14d;--hl-text:#191300;
 }
 html,body{height:100%;overflow:hidden;overscroll-behavior:none;}
-html{background:var(--bg);}
+html{background:var(--bg);-webkit-text-size-adjust:100%;text-size-adjust:100%;}
 body{position:fixed;inset:0;font-family:var(--mono);color:var(--text);background:var(--bg);-webkit-font-smoothing:antialiased;font-variant-ligatures:none;}
 button{font-family:var(--mono);color:inherit;background:none;border:none;cursor:pointer;touch-action:manipulation;-webkit-touch-callout:none;user-select:none;-webkit-user-select:none;}
 button:disabled{opacity:.4;cursor:default;}
@@ -488,17 +488,20 @@ mark{background:var(--hl);color:var(--hl-text);border-radius:3px;padding:0 2px;}
 .fb-link,.fb-img{color:var(--syn-link);}
 .fb-q,.fb-li,.fb-t{color:var(--syn-li);}
 .fb-table,.fb-hr{color:var(--syn-punc);}
-#workspace{flex:1;min-height:0;display:flex;position:relative;--fs:15px;}
-#editorPane{flex:1;min-width:0;position:relative;font-size:var(--fs);--gw:2ch;}
+#workspace{flex:1;min-height:0;display:flex;position:relative;--fs:15px;--lh:25px;}
+#editorPane{flex:1;min-width:0;position:relative;font-size:var(--fs);--gw:2ch;--wfix:0px;}
 #gutterBg{position:absolute;left:0;top:0;bottom:0;width:calc(var(--gw) + 14px);background:var(--panel);border-right:1px solid var(--border);opacity:.6;}
-#hl,#ta{position:absolute;inset:0;font-family:var(--mono);font-size:var(--fs);line-height:1.65;letter-spacing:0;tab-size:2;font-variant-ligatures:none;white-space:pre-wrap;overflow-wrap:break-word;word-break:normal;}
+#hl,#ta{position:absolute;inset:0;font-family:var(--mono);font-size:var(--fs);line-height:var(--lh);-webkit-text-size-adjust:100%;text-size-adjust:100%;font-kerning:none;font-synthesis:none;text-rendering:optimizeSpeed;letter-spacing:0;tab-size:2;font-variant-ligatures:none;white-space:pre-wrap;overflow-wrap:break-word;word-break:normal;}
 #hl{overflow:hidden;padding:0;pointer-events:none;z-index:1;color:var(--text);margin:0;}
-#lines{padding:16px 18px 160px 0;will-change:transform;}
+#lines{padding:16px calc(18px + var(--wfix)) 160px 0;will-change:transform;}
+#lines span{line-height:inherit;vertical-align:baseline;}
+.wprobe{position:absolute;left:0;top:0;visibility:hidden;pointer-events:none;z-index:-1;padding:0;margin:0;border:0;height:0;min-height:0;overflow:hidden;font-family:var(--mono);font-size:var(--fs);line-height:var(--lh);letter-spacing:0;tab-size:2;font-variant-ligatures:none;font-kerning:none;font-synthesis:none;text-rendering:optimizeSpeed;white-space:pre-wrap;overflow-wrap:break-word;word-break:normal;resize:none;appearance:none;-webkit-appearance:none;-webkit-text-size-adjust:100%;}
+div.wprobe{height:auto;}
 #ta{z-index:2;overflow-y:auto;-webkit-overflow-scrolling:touch;resize:none;border:none;border-radius:0;appearance:none;-webkit-appearance:none;background:transparent;caret-color:var(--accent);color:transparent;-webkit-text-fill-color:transparent;padding:16px 18px 160px calc(var(--gw) + 22px);overscroll-behavior:contain;}
 #ta::selection{background:var(--sel);color:transparent;}
 #lines{counter-reset:ln;}
-.ln{counter-increment:ln;position:relative;padding-left:calc(var(--gw) + 22px);min-height:1.65em;}
-.ln::before{content:counter(ln);position:absolute;left:8px;top:0;width:var(--gw);text-align:right;color:var(--gutter-fg);font-size:calc(var(--fs) - 2.5px);line-height:calc(1.65 * var(--fs));}
+.ln{counter-increment:ln;position:relative;padding-left:calc(var(--gw) + 22px);min-height:var(--lh);}
+.ln::before{content:counter(ln);position:absolute;left:8px;top:0;width:var(--gw);text-align:right;color:var(--gutter-fg);font-size:calc(var(--fs) - 2.5px);line-height:var(--lh);}
 .ln.cur{background:var(--curline);}
 .ln.cur::before{color:var(--accent);}
 #editorPane.no-ln #gutterBg{display:none;}
@@ -707,7 +710,7 @@ input[type="range"]::-moz-range-thumb{width:14px;height:14px;border-radius:50%;b
 #app.focus #gutterBg{display:none;}
 #app.focus .ln{padding-left:28px;}
 #app.focus .ln::before{display:none;}
-#app.focus #lines{padding:56px 28px 45vh 0;}
+#app.focus #lines{padding:56px calc(28px + var(--wfix)) 45vh 0;}
 #app.focus #ta{padding:56px 28px 45vh 28px;}
 #focusExit{position:fixed;z-index:130;top:calc(env(safe-area-inset-top) + 12px);right:calc(env(safe-area-inset-right) + 12px);width:38px;height:38px;display:none;align-items:center;justify-content:center;border-radius:10px;background:var(--raised);border:1px solid var(--border);color:var(--muted);opacity:0;pointer-events:none;transition:opacity .25s,color .15s,border-color .15s;box-shadow:0 6px 20px rgba(0,0,0,.25);}
 #focusExit svg{width:17px;height:17px;}
@@ -3309,11 +3312,11 @@ function buildHighlight(){
       else{fence=null;body=`<span class="tk-fence">${esc(raw)}</span>`;}
     }else if(fence!==null){body=hlCode(raw,fence);}
     else body=mdLine(raw);
-    html+=`<div class="ln">${body||"\u200b"}</div>`;
+    html+=`<div class="ln">${body||"<br>"}</div>`;
   }
   if(v==="")html=`<div class="ln"><span class="tk-ghost"># hello, world — start typing…</span></div>`;
   linesEl.innerHTML=html;
-  prevCur=-1;markCurLine();syncScroll();
+  prevCur=-1;markCurLine();syncScroll();scheduleWrapCheck();
 }
 function markCurLine(){
   const idx=ta.value.slice(0,ta.selectionStart).split("\n").length-1;
@@ -3331,6 +3334,57 @@ function syncScroll(){
   if(hl.scrollTop)hl.scrollTop=0;if(hl.scrollLeft)hl.scrollLeft=0;
 }
 let _lastSX=null;
+/* ---- caret/text alignment guard ----
+   The caret is drawn by the textarea and the coloured text by #lines, so both must wrap
+   lines at exactly the same places and give every line exactly the same height, or the
+   caret drifts further from the text the further down the note you go. Line height is
+   kept a whole number of pixels (fractional heights are rounded differently by the two
+   layers on iPad), and the real wrapping width of the textarea is measured with an
+   invisible probe: iOS insets textarea text by a few pixels (and desktop scrollbars take
+   width), which makes long lines wrap earlier in the textarea than in the text layer. */
+let _wrapT=0,_wrapTA=null,_wrapDiv=null;
+function setEditorFontSize(px){
+  workspace.style.setProperty("--fs",px+"px");
+  workspace.style.setProperty("--lh",Math.round(px*1.65)+"px");
+  scheduleWrapCheck();
+}
+function scheduleWrapCheck(){clearTimeout(_wrapT);_wrapT=setTimeout(checkWrap,300);}
+function checkWrap(){
+  const v=ta.value;
+  if(!v||!ta.offsetWidth)return;
+  if(!_wrapTA){
+    _wrapTA=document.createElement("textarea");
+    _wrapTA.className="wprobe";_wrapTA.tabIndex=-1;_wrapTA.readOnly=true;
+    _wrapTA.setAttribute("aria-hidden","true");_wrapTA.setAttribute("wrap","soft");
+    _wrapTA.setAttribute("autocorrect","off");_wrapTA.setAttribute("spellcheck","false");
+    _wrapDiv=document.createElement("div");
+    _wrapDiv.className="wprobe";_wrapDiv.setAttribute("aria-hidden","true");
+    editorPane.appendChild(_wrapTA);editorPane.appendChild(_wrapDiv);
+  }
+  const cs=getComputedStyle(ta);
+  const w=ta.clientWidth-parseFloat(cs.paddingLeft)-parseFloat(cs.paddingRight);
+  if(!(w>40))return;
+  const lh=parseFloat(cs.lineHeight)||20;
+  _wrapTA.style.width=w+"px";_wrapTA.value=v;
+  const target=_wrapTA.scrollHeight;
+  _wrapDiv.textContent=v;
+  if(v.endsWith("\n"))_wrapDiv.appendChild(document.createElement("br"));
+  let best=0,bestD=Infinity;
+  for(let f=0;f<=14;f++){
+    _wrapDiv.style.width=(w-f)+"px";
+    const d=Math.abs(_wrapDiv.offsetHeight-target);
+    if(d<bestD){bestD=d;best=f;}
+    if(d<lh/2)break;
+  }
+  _wrapTA.value="";_wrapDiv.textContent="";
+  /* width the text layer currently wraps at, without any correction applied */
+  const ln=linesEl.firstElementChild;if(!ln)return;
+  const lcs=getComputedStyle(linesEl);
+  const curFix=parseFloat(editorPane.style.getPropertyValue("--wfix"))||0;
+  const divW=linesEl.clientWidth-(parseFloat(lcs.paddingRight)-curFix)-parseFloat(getComputedStyle(ln).paddingLeft);
+  const fix=Math.max(0,Math.round((divW-(w-best))*100)/100)+"px";
+  if(editorPane.style.getPropertyValue("--wfix")!==fix){editorPane.style.setProperty("--wfix",fix);syncScroll();}
+}
 function resyncHard(){
   /* iOS can move the page, the textarea or the text layer behind our back (app switch,
      keyboard show/hide, rotation). Undo any stray scrolling and re-align everything. */
@@ -4702,7 +4756,7 @@ function syncChips(){
 function applyPrefs(){
   setTheme(prefs.theme);
   setFont(prefs.font,true);
-  workspace.style.setProperty("--fs",prefs.fontSize+"px");
+  setEditorFontSize(prefs.fontSize);
   $("setSize").value=prefs.fontSize;$("setSizeVal").textContent=prefs.fontSize+"px";
   $("setNn").value=prefs.nnSize;$("setNnVal").textContent=prefs.nnSize+"%";applyNnSize();
   editorPane.classList.toggle("no-ln",!prefs.lineNumbers);
@@ -5008,7 +5062,7 @@ function wire(){
   document.querySelectorAll(".set-tab").forEach(b=>b.addEventListener("click",()=>{ui.setTab=b.dataset.stab;syncSetTab();}));
   $("setSize").addEventListener("input",e=>{
     prefs.fontSize=+e.target.value;
-    workspace.style.setProperty("--fs",prefs.fontSize+"px");
+    setEditorFontSize(prefs.fontSize);
     $("setSizeVal").textContent=prefs.fontSize+"px";
     if(activeNote())buildHighlight();markDirty();
   });
@@ -5126,6 +5180,8 @@ bindPdfUI();
   /* lifecycle */
   window.addEventListener("pagehide",flushSave);
   const settle=()=>{resyncHard();requestAnimationFrame(resyncHard);[60,250,700].forEach(t=>setTimeout(resyncHard,t));};
+  if(window.ResizeObserver)new ResizeObserver(()=>scheduleWrapCheck()).observe(ta);
+  if(document.fonts&&document.fonts.addEventListener)document.fonts.addEventListener("loadingdone",()=>scheduleWrapCheck());
   document.addEventListener("visibilitychange",()=>{if(document.hidden)flushSave();else settle();});
   window.addEventListener("pageshow",settle);
   window.addEventListener("focus",settle);
