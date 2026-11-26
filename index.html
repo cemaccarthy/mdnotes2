@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <!--
-  mdnotes — a markdown notes console for iPad  ·  v2.5
+  mdnotes — a markdown notes console for iPad  ·  v2.6
   ─────────────────────────────────────────────────────────────
   INSTALL (GitHub Pages + iPad Home Screen):
   1. Save this file as `index.html` in a GitHub repository.
@@ -357,6 +357,7 @@ button:disabled{opacity:.4;cursor:default;}
 input,select,textarea{font-family:var(--mono);color:var(--text);}
 :focus{outline:none;}
 :focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:6px;}
+#ta:focus,#ta:focus-visible{outline:none;}
 ::selection{background:var(--sel);}
 svg{display:block;width:18px;height:18px;flex:none;}
 kbd{font-family:var(--mono);font-size:10px;color:var(--muted);border:1px solid var(--border);border-bottom-width:2px;border-radius:4px;padding:1px 5px;background:var(--raised);}
@@ -494,6 +495,7 @@ mark{background:var(--hl);color:var(--hl-text);border-radius:3px;padding:0 2px;}
 .fb-b{color:var(--syn-b);font-weight:700;}
 .fb-i{color:var(--syn-i);font-style:italic;}
 .fb-u{color:var(--syn-i);text-decoration:underline;text-underline-offset:3px;}
+.fb-s{color:var(--syn-i);text-decoration:line-through;}
 .fb-m{color:var(--text);font-weight:700;}
 .fb-code,.fb-fence{color:var(--syn-code);}
 .fb-link,.fb-img{color:var(--syn-link);}
@@ -536,6 +538,7 @@ div.wprobe{height:auto;}
 .tk-b{color:var(--syn-b);font-weight:700;}
 .tk-i{color:var(--syn-i);font-style:italic;}
 .tk-u{color:var(--syn-i);text-decoration:underline;text-underline-offset:3px;}
+.tk-s{color:var(--syn-i);text-decoration:line-through;}
 .tk-m{background:var(--hl);color:var(--hl-text);border-radius:3px;}
 .tk-code{color:var(--syn-code);background:var(--code-bg);border-radius:3px;}
 .tk-link{color:var(--syn-link);}
@@ -606,6 +609,7 @@ html[data-group="crt"] .nm{color:inherit;font-weight:inherit;font-style:inherit;
 .md strong{font-weight:700;}
 .md em{font-style:italic;}
 .md u{text-decoration:underline;text-underline-offset:3px;}
+.md s{text-decoration:line-through;}
 .md mark{background:var(--hl);color:var(--hl-text);padding:0 3px;}
 .md .cb{margin:.9em 0;border:1px solid var(--border);border-radius:10px;overflow:hidden;background:var(--code-bg);}
 .md .cb-h{display:flex;align-items:center;justify-content:space-between;padding:6px 12px;background:var(--raised);border-bottom:1px solid var(--border);font-size:10.5px;color:var(--muted);letter-spacing:.8px;}
@@ -740,7 +744,7 @@ input[type="range"]::-moz-range-thumb{width:14px;height:14px;border-radius:50%;b
 
 /* ---------- full-screen writing (focus) mode ---------- */
 #btnFocus.on{color:var(--accent);}
-#app[data-mode="read"] #btnFocus,#app.no-note #btnFocus,#app.no-note #btnPdf{display:none;}
+#app.no-note #btnFocus,#app.no-note #btnPdf{display:none;}
 #app.focus #sidebar,#app.focus #topbar,#app.focus #formatbar,#app.focus #statusbar{display:none;}
 #app.focus #scrim{display:none !important;}
 #app.focus #workspace{justify-content:center;}
@@ -750,6 +754,7 @@ input[type="range"]::-moz-range-thumb{width:14px;height:14px;border-radius:50%;b
 #app.focus .ln::before{display:none;}
 #app.focus #lines{padding:56px calc(28px + var(--wfix)) 45vh 0;}
 #app.focus #ta{padding:56px 28px 45vh 28px;}
+#app.focus #previewPane{padding:56px 28px 30vh;}
 #focusExit{position:fixed;z-index:130;top:calc(env(safe-area-inset-top) + 12px);right:calc(env(safe-area-inset-right) + 12px);width:38px;height:38px;display:none;align-items:center;justify-content:center;border-radius:10px;background:var(--raised);border:1px solid var(--border);color:var(--muted);opacity:0;pointer-events:none;transition:opacity .25s,color .15s,border-color .15s;box-shadow:0 6px 20px rgba(0,0,0,.25);}
 #focusExit svg{width:17px;height:17px;}
 #focusExit:hover{color:var(--accent);border-color:var(--accent);}
@@ -784,7 +789,7 @@ body.is-focus #focusExit.show{opacity:1;pointer-events:auto;}
 <div id="app" data-mode="write" class="sb-closed">
   <aside id="sidebar" aria-label="Notes and folders">
     <div class="sb-top">
-      <div class="brand"><span class="pr">❯</span>mdnotes<span class="cursor">▍</span><span class="ver">v2.5</span></div>
+      <div class="brand"><span class="pr">❯</span>mdnotes<span class="cursor">▍</span><span class="ver">v2.6</span></div>
       <button id="sbClose" class="ib" aria-label="Close sidebar"></button>
     </div>
     <div class="sb-tools">
@@ -842,7 +847,7 @@ body.is-focus #focusExit.show{opacity:1;pointer-events:auto;}
         <button data-mode="write" data-sfx class="active" role="tab" aria-label="Write"><span class="sgi"></span><span>Write</span></button>
         <button data-mode="read" data-sfx role="tab" aria-label="Read rendered markdown"><span class="sgi"></span><span>Read</span></button>
       </div>
-      <button id="btnFocus" class="ib" aria-label="Full-screen writing" title="Full-screen writing (⌘⇧F)"></button>
+      <button id="btnFocus" class="ib" aria-label="Full screen" title="Full screen (⌘⇧F)"></button>
       <button id="btnPdf" class="ib" aria-label="Export note as PDF" title="Export note as PDF (⌘⇧P)"></button>
       <button id="btnSettings" class="ib" aria-label="Settings" title="Settings"></button>
       <button id="btnSound" class="ib" data-sfx aria-label="Toggle sound" title="Sound on/off"></button>
@@ -853,7 +858,8 @@ body.is-focus #focusExit.show{opacity:1;pointer-events:auto;}
       <button class="fb fb-h" data-cmd="h" title="Heading — cycle H1–H6">#</button>
       <button class="fb fb-b" data-cmd="b" title="Bold (⌘B)">**</button>
       <button class="fb fb-i" data-cmd="i" title="Italic (⌘I)">*</button>
-      <button class="fb fb-u" data-cmd="u" title="Underline (⌘U)">~~</button>
+      <button class="fb fb-u" data-cmd="u" title="Underline (⌘U)">~</button>
+      <button class="fb fb-s" data-cmd="s" title="Strikethrough (⌘⇧X)">~~</button>
       <button class="fb fb-m" data-cmd="mark" title="Highlight">==</button>
       <button class="fb fb-code" data-cmd="code" title="Inline code">`</button>
       <button class="fb fb-fence" data-cmd="fence" title="Code block">```</button>
@@ -966,7 +972,7 @@ body.is-focus #focusExit.show{opacity:1;pointer-events:auto;}
     <button class="menu-row" id="setExportPDF" type="button"><span id="setPdfIco"></span><span class="mlab">Export all notes as PDF</span></button>
     <div class="pop-div"></div>
     <button class="menu-row" id="setReset" type="button"><span id="setResetIco"></span><span class="mlab">Reset preferences</span></button>
-    <div class="pop-foot" id="setStats">mdnotes v2.5 · stored on this device</div>
+    <div class="pop-foot" id="setStats">mdnotes v2.6 · stored on this device</div>
   </div>
 </div>
 <div id="popNote" class="pop" hidden></div>
@@ -2966,24 +2972,27 @@ function seedData(){
     "A quiet place to think in **Markdown**, dressed like the console you already love. Everything lives *on this device* — no account, no cloud.","",
     "## Ways to look at a note",
     "- **Write** — raw markdown with live syntax highlighting",
-    "- **Focus** — full-screen, text-only writing (`⌘⇧F`, `Esc` to leave)",
-    "- **Read** — a clean, monotone document with ==no markdown symbols== in sight","",
+    "- **Read** — a clean document with ==no markdown symbols== in sight",
+    "- **Full screen** — just the text, in Write *or* Read (`⌘⇧F` or the ⤢ button, `Esc` to leave)","",
     "## Try it now",
     "- [x] Open mdnotes",
     "- [ ] Switch to **Read** and tick this box *from the preview*",
-    "- [ ] Highlight with `==words==` (yellow) or pick a colour: `==<red>words==`, `==<orange>…==`, `==<green>…==`, `==<blue>…==`, `==<purple>…==` — underline with `~~words~~`",
+    "- [ ] Highlight with `==words==`, or pick a colour: ==<red>red==, ==<orange>orange==, ==<green>green==, ==<blue>blue==, ==<purple>purple==",
+    "- [ ] ~Underline~ with `~one tilde~` and ~~strike through~~ with `~~two~~`",
+    "- [ ] Type `(`, `[`, `{`, `<`, a quote or `**` — the closing half appears for you",
+    "- [ ] Type ``` on a new line — the code block closes itself",
     "- [ ] Tap `![]()` to add a photo, or paste one straight in",
-    "- [ ] Open ⚙ Settings → Appearance: try **Paper**, **Latte** or **Dawn**, then pick a typeface like ==JetBrains Mono== or ==VT323==",
+    "- [ ] Open ⚙ Settings → Appearance: try **Paper**, **Latte** or **Terminal**, then pick a typeface like ==JetBrains Mono== or ==VT323==",
     "- [ ] Export this note as a PDF from its ⋯ menu","",
     "## Folders",
-    "Use the folder button beside **+** to create folders. A folder's ⋯ menu adds ==subfolders==, renames, or deletes. Move notes via ⋯ → *Move to folder*.","",
+    "Use the folder button beside **+** to create folders. A folder's ⋯ menu adds ==<blue>subfolders==, renames, or deletes. Move notes via ⋯ → *Move to folder*.","",
     "> **Tip** — drop `.md` files anywhere to import them. Select several notes to export them together as one PDF.","",
     "```js",
     "const note = { app: 'mdnotes', format: 'markdown' };",
     "console.log(`saved locally: ${note.format}`);",
     "```","",
     "---",
-    "⌘K search · ⌘E write ⇄ read · ⌘S save · ⌘B bold · ⌘I italic · ⌘U underline · ⌘⇧P PDF"
+    "⌘K search · ⌘E write ⇄ read · ⌘⇧F full screen · ⌘S save · ⌘B bold · ⌘I italic · ⌘U underline · ⌘⇧X strikethrough · ⌘⇧P PDF"
   ].join("\n");
   const guide=[
     "# Markdown field guide","",
@@ -2992,11 +3001,28 @@ function seedData(){
     "| ------ | ------ |",
     "| `**bold**` | **bold** |",
     "| `*italic*` | *italic* |",
-    "| `~~underline~~` | ~~underline~~ |",
-    "| `==highlight==` | ==highlight== |",
-    "| `==<red>red==` `==<orange>orange==` `==<green>green==` | ==<red>red== ==<orange>orange== ==<green>green== |",
-    "| `==<blue>blue==` `==<purple>purple==` `==<yellow>yellow==` | ==<blue>blue== ==<purple>purple== ==<yellow>yellow== |",
-    "| `` `code` `` | `code` |","",
+    "| `***both***` | ***both*** |",
+    "| `~underline~` | ~underline~ |",
+    "| `~~strikethrough~~` | ~~strikethrough~~ |",
+    "| a backtick each side | `code` |","",
+    "## Highlights","",
+    "Plain `==highlight==` is yellow. Put a colour in angle brackets straight after the opening `==` for the others:","",
+    "| Syntax | Result |",
+    "| ------ | ------ |",
+    "| `==yellow==` | ==yellow== |",
+    "| `==<red>red==` | ==<red>red== |",
+    "| `==<orange>orange==` | ==<orange>orange== |",
+    "| `==<green>green==` | ==<green>green== |",
+    "| `==<blue>blue==` | ==<blue>blue== |",
+    "| `==<purple>purple==` | ==<purple>purple== |","",
+    "Each theme tints these in its own palette, and the CRT themes keep them in their single phosphor colour.","",
+    "## Typing helpers","",
+    "- Brackets `()` `[]` `{}` `<>` and quotes `\"\"` `''` close themselves; type the closer to step over it",
+    "- `*` `_` `~` and the backtick pair too — type the marker again to grow it: `*` → `**` → `***`, `~` → `~~`",
+    "- Select text first and type a marker or bracket to wrap it",
+    "- A space right after an opening marker drops its partner, so `* item` and `a == b` stay as typed",
+    "- Backspace inside an empty pair removes both halves",
+    "- Type ``` at the start of a line and the block closes itself — press Enter to write inside it","",
     "## Lists","",
     "1. Ordered items",
     "2. Keep their numbers",
@@ -3012,6 +3038,14 @@ function seedData(){
     "def greet(name):",
     "    return f'hello, {name}'",
     "```","",
+    "## Diagrams","",
+    "A `nomnoml` code block is highlighted while you write and drawn as a diagram in Read mode and in PDFs:","",
+    "```nomnoml",
+    "#direction: right",
+    "[<abstract> Note|title: string;body: string|render()]",
+    "[Folder] 1 - 0..* [Note]",
+    "[Note] -> [<actor> You]",
+    "```","",
     "## Links & images","",
     "[CommonMark spec](https://commonmark.org) · bare URLs autolink: https://developer.mozilla.org","",
     "Images: tap `![]()`, paste from the clipboard, or drop a file. Remote URLs work too: `![alt](https://…)`.","",
@@ -3023,9 +3057,14 @@ function seedData(){
     "## Shipped",
     "- [x] Folders + subfolders",
     "- [x] Image attachments",
-    "- [x] ==Yellow highlight== and ~~underline~~",
-    "- [x] Fifteen light themes + 32 mono typefaces",
-    "- [x] On-device PDF export","",
+    "- [x] On-device PDF export",
+    "- [x] 34 themes (15 light, 17 dark, 2 CRT) + 32 mono typefaces",
+    "- [x] nomnoml diagrams, with syntax highlighting in every theme",
+    "- [x] Coloured highlights: ==yellow==, ==<red>red==, ==<orange>orange==, ==<green>green==, ==<blue>blue==, ==<purple>purple==",
+    "- [x] ~Underline~ and ~~strikethrough~~",
+    "- [x] Auto-closing brackets, quotes, markers and code blocks",
+    "- [x] Full screen for writing *and* reading",
+    "- [x] A caret that stays lined up on iPad","",
     "## Ideas",
     "- [ ] Tags",
     "- [ ] Note history",
@@ -3035,8 +3074,8 @@ function seedData(){
     "# Scratchpad","",
     "- [ ] Water the plants",
     "- [ ] Book the dentist",
-    "- [x] Back up notes (sidebar footer ⤓)","",
-    "> Write first, edit later."
+    "- [x] ~~Back up notes~~ (sidebar footer ⤓)","",
+    "> Write first, ==<green>edit later==."
   ].join("\n");
   const reading=[
     "# Reading list","",
@@ -3257,9 +3296,9 @@ function typeSfx(){
 /* ============================== MARKDOWN: EDITOR HIGHLIGHT ============================== */
 const HL_COLORS=["yellow","red","orange","green","blue","purple"];
 const HL_TAG_RX=/^(?:&lt;|<)(yellow|red|orange|green|blue|purple)(?:&gt;|>)/i;
-const E_RX=/(`[^`\n]+`)|(!?\[[^\]\n]*\]\([^)\n]*\))|(\*\*\*[^*\n]+\*\*\*)|(\*\*[^*\n]+\*\*)|(\*[^*\n]+\*)|(~~[^~\n]+~~)|(==[^=\n]+==)|(https?:\/\/[^\s<>()]+)/g;
+const E_RX=/(`[^`\n]+`)|(!?\[[^\]\n]*\]\([^)\n]*\))|(\*\*\*[^*\n]+\*\*\*)|(\*\*[^*\n]+\*\*)|(\*[^*\n]+\*)|(~~[^~\n]+~~)|(~[^~\n]+~)|(==[^=\n]+==)|(https?:\/\/[^\s<>()]+)/g;
 function inl(escaped){
-  return escaped.replace(E_RX,(m,code,link,bi,b,i,u,mk,url)=>{
+  return escaped.replace(E_RX,(m,code,link,bi,b,i,st,u,mk,url)=>{
     const p=t=>`<span class="tk-p">${t}</span>`;
     if(code)return`<span class="tk-code">${code}</span>`;
     if(link){
@@ -3270,7 +3309,8 @@ function inl(escaped){
     if(bi)return p(m.slice(0,3))+`<span class="tk-b tk-i">${m.slice(3,-3)}</span>`+p(m.slice(0,3));
     if(b)return p(m.slice(0,2))+`<span class="tk-b">${m.slice(2,-2)}</span>`+p(m.slice(0,2));
     if(i)return p("*")+`<span class="tk-i">${m.slice(1,-1)}</span>`+p("*");
-    if(u)return p("~~")+`<span class="tk-u">${m.slice(2,-2)}</span>`+p("~~");
+    if(st)return p("~~")+`<span class="tk-s">${m.slice(2,-2)}</span>`+p("~~");
+    if(u)return p("~")+`<span class="tk-u">${m.slice(1,-1)}</span>`+p("~");
     if(mk){
       const body=m.slice(2,-2),t=body.match(HL_TAG_RX);
       if(t&&t[0].length<body.length){
@@ -3564,7 +3604,8 @@ function inlR(text){
   s=s.replace(/\*([^*\n]+)\*/g,"<em>$1</em>");
   s=s.replace(/(^|[^\w])__([^_\n]+)__(?!\w)/g,"$1<strong>$2</strong>");
   s=s.replace(/(^|[^\w])_([^_\n]+)_(?!\w)/g,"$1<em>$2</em>");
-  s=s.replace(/~~([^~\n]+)~~/g,"<u>$1</u>");
+  s=s.replace(/~~([^~\n]+)~~/g,"<s>$1</s>");
+  s=s.replace(/~([^~\n]+)~/g,"<u>$1</u>");
   s=s.replace(/==([^=\n]+)==/g,(m,body)=>{
     const t=body.match(HL_TAG_RX);
     if(t&&t[0].length<body.length)return`<mark class="hl-${t[1].toLowerCase()}">${body.slice(t[0].length)}</mark>`;
@@ -4028,6 +4069,7 @@ function drawLineAt(doc,line,x,base,size,color,jw){
     const w=measure(r.t,r.kind,r.size,r.b,r.i)+extra*spaceCount(r.t);
     doc.text(r.t,cx,base,r.size,pdfFontName(r.kind,r.b,r.i),r.color||color,extra&&spaceCount(r.t)?extra:0);
     if(r.u||r.link)doc.line(cx,base-r.size*.16,cx+w,base-r.size*.16,r.color||color,.6);
+    if(r.st)doc.line(cx,base+r.size*.3,cx+w,base+r.size*.3,r.color||color,.6);
     cx+=w;
   }
 }
@@ -4055,6 +4097,7 @@ function runsFromNode(node,style,out){
     if(tag==="STRONG"||tag==="B"){s.b=true;if(S.bold)s.color=S.bold;}
     if(tag==="EM"||tag==="I"){s.i=true;if(S.italic)s.color=S.italic;}
     if(tag==="U")s.u=true;
+    if(tag==="S"||tag==="DEL")s.st=true;
     if(tag==="MARK"){s.mark=true;const c=(ch.className.match(/\bhl-(\w+)/)||[])[1];s.markFill=c&&PDF_HL[c]?hex2pdf(PDF_HL[c]):null;}
     if(tag==="CODE"){s.kind="mono";s.code=true;s.size=Math.max(7,(s.size||PDFX.bodySize)*.9);}
     if(tag==="A"){s.link=true;if(S.link)s.color=S.link;}
@@ -4414,7 +4457,7 @@ function updateStats(){
   const kb=(new Blob([JSON.stringify(notes)]).size/1024).toFixed(1);
   $("storeStats").textContent=`${notes.length} notes · ${folders.length} folders · ${kb} KB`;
   const mb=(imgBytes()/1048576).toFixed(1);
-  $("setStats").textContent=`mdnotes v2.5 · ${notes.length} notes · ${folders.length} folders · ${kb} KB text · ${IMG.size} images (${mb} MB)`;
+  $("setStats").textContent=`mdnotes v2.6 · ${notes.length} notes · ${folders.length} folders · ${kb} KB text · ${IMG.size} images (${mb} MB)`;
 }
 function updateCounts(){
   const v=ta.value,w=(v.match(/\S+/g)||[]).length;
@@ -4523,7 +4566,6 @@ function moveThumb(){
 }
 function setMode(m,silent){
   if(m!=="read")m="write";
-  if(m==="read"&&ui.focus)setFocus(false,true);
   ui.mode=m;prefs.mode=m;app.dataset.mode=m;
   segBtns.forEach(b=>b.classList.toggle("active",b.dataset.mode===m));
   moveThumb();
@@ -5015,7 +5057,7 @@ function wrap(l,r,ph){
    closing ``` on the next line, so Enter puts the caret inside the block. */
 const AP_BR={"(":")","[":"]","{":"}","<":">"};
 const AP_Q={'"':'"',"'":"'","\u201c":"\u201d","\u2018":"\u2019"};
-const AP_MARK="*_`",AP_DBL="~=";
+const AP_MARK="*_`~",AP_DBL="=";
 let _apBusy=false;
 function apInFence(v,pos){
   const a=v.lastIndexOf("\n",pos-1)+1;
@@ -5039,7 +5081,7 @@ function autoPair(ev){
     if(s!==e||s===0)return;
     const a=v[s-1],b=v[s];
     if((AP_BR[a]&&AP_BR[a]===b)||(AP_Q[a]&&AP_Q[a]===b)||(a===b&&(AP_MARK+AP_DBL).includes(a)&&!apInFence(v,s))){
-      if(a==="~"||a==="="){ /* ~~|~~ → remove both doubles */
+      if(a==="="){ /* ==|== → remove both doubles */
         if(v.slice(s-2,s)===a+a&&v.slice(s,s+2)===a+a){ev.preventDefault();apEdit(s-2,s+2,"",s-2);}
         return;
       }
@@ -5074,7 +5116,7 @@ function autoPair(ev){
   }
   /* space right after an opening marker: not formatting after all, drop the partner */
   if(ch===" "&&!code){
-    const L=v.slice(0,s).match(/(\*{1,3}|_{1,3}|~~|==)$/),R=L&&v.slice(s,s+L[1].length);
+    const L=v.slice(0,s).match(/(\*{1,3}|_{1,3}|~{1,2}|==)$/),R=L&&v.slice(s,s+L[1].length);
     if(L&&R===L[1]){ev.preventDefault();apEdit(s,s+R.length," ",s+1);}
     return;
   }
@@ -5094,20 +5136,20 @@ function autoPair(ev){
     return;
   }
   if(code)return;
-  if(ch==="*"||ch==="_"){
-    const L=v.slice(0,s).match(ch==="*"?/\*+$/:/_+$/),R=v.slice(s).match(ch==="*"?/^\*+/:/^_+/);
-    const ln=L?L[0].length:0,rn=R?R[0].length:0;
-    if(ln&&ln===rn&&apOpenOK(v[s-ln-1])){ /* empty pair: grow it, up to *** */
-      if(ln<3){ev.preventDefault();apEdit(s,s,ch+ch,s+1);}
+  if(ch==="*"||ch==="_"||ch==="~"){
+    const q="\\"+ch,L=v.slice(0,s).match(new RegExp(q+"+$")),R=v.slice(s).match(new RegExp("^"+q+"+"));
+    const ln=L?L[0].length:0,rn=R?R[0].length:0,max=ch==="~"?2:3;
+    if(ln&&ln===rn&&apOpenOK(v[s-ln-1])){ /* empty pair: grow it, up to *** (or ~~) */
+      if(ln<max){ev.preventDefault();apEdit(s,s,ch+ch,s+1);}
       return;
     }
     if(rn){ev.preventDefault();ta.setSelectionRange(s+1,s+1);scheduleCaret();return;}
     if(!ln&&apOpenOK(prev)&&apCloseOK(next)){ev.preventDefault();apEdit(s,s,ch+ch,s+1);}
     return;
   }
-  if(ch==="~"||ch==="="){
+  if(ch==="="){
     if(next===ch&&v.slice(s-2,s)!==ch+ch){ev.preventDefault();ta.setSelectionRange(s+1,s+1);scheduleCaret();return;}
-    /* second ~ / = after a word boundary: ~~|~~ / ==|== */
+    /* second = after a word boundary: ==|== */
     if(prev===ch&&v[s-2]!==ch&&apOpenOK(v[s-2])&&apCloseOK(next)){ev.preventDefault();apEdit(s,s,ch+ch+ch,s+1);}
     return;
   }
@@ -5147,7 +5189,8 @@ function runCmd(cmd){
   switch(cmd){
     case"b":wrap("**","**","bold");break;
     case"i":wrap("*","*","italic");break;
-    case"u":wrap("~~","~~","underline");break;
+    case"u":wrap("~","~","underline");break;
+    case"s":wrap("~~","~~","strikethrough");break;
     case"mark":wrap("==","==","highlight");break;
     case"code":wrap("`","`","code");break;
     case"h":{
@@ -5195,10 +5238,8 @@ function flashExit(){
 }
 function setFocus(on,silent){
   on=!!on;
-  if(on){
-    if(!activeNote())return;
-    if(ui.mode!=="write")setMode("write",true);
-  }
+  if(on&&!activeNote())return;
+  const writing=ui.mode==="write";
   if(on===!!ui.focus)return;
   ui.focus=on;
   closePop();
@@ -5215,8 +5256,8 @@ function setFocus(on,silent){
       }
     }catch(_){}
     flashExit();
-    setTimeout(()=>ta.focus(),30);
-    if(!silent)toast("Full-screen writing · Esc to exit",{icon:IC.expand,dur:2400});
+    if(writing)setTimeout(()=>ta.focus(),30);
+    if(!silent)toast(`Full-screen ${writing?"writing":"reading"} · Esc to exit`,{icon:IC.expand,dur:2400});
   }else{
     clearTimeout(exitT);focusExit.classList.remove("show");
     try{
@@ -5225,7 +5266,7 @@ function setFocus(on,silent){
         const p=ef&&ef.call(document);if(p&&p.catch)p.catch(()=>{});
       }
     }catch(_){}
-    setTimeout(()=>ta.focus(),30);
+    if(writing)setTimeout(()=>ta.focus(),30);
   }
   requestAnimationFrame(()=>{buildHighlight();syncScroll();moveThumb();});
   if(!silent)sfx("toggle");
@@ -5468,6 +5509,7 @@ bindPdfUI();
     if(k==="e"&&!e.shiftKey){e.preventDefault();if(activeNote())setMode(ui.mode==="read"?"write":"read");return;}
     if(k==="s"){e.preventDefault();flushSave();toast("Saved",{kind:"ok",icon:IC.check,dur:1400});sfx("tick");return;}
     if(k==="p"&&e.shiftKey){e.preventDefault();if(activeId)exportPDF([activeId]);return;}
+    if(k==="x"&&e.shiftKey&&document.activeElement===ta){e.preventDefault();runCmd("s");return;}
     if(k==="f"&&e.shiftKey){e.preventDefault();if(activeNote())toggleFocus();return;}
     if((k==="b"||k==="i"||k==="u")&&document.activeElement===ta&&!e.shiftKey){e.preventDefault();runCmd(k);}
   });
