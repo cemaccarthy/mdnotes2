@@ -502,6 +502,14 @@ mark{background:var(--hl);color:var(--hl-text);border-radius:3px;padding:0 2px;}
 div.wprobe{height:auto;}
 #ta{z-index:2;overflow-y:auto;-webkit-overflow-scrolling:touch;resize:none;border:none;border-radius:0;appearance:none;-webkit-appearance:none;background:transparent;caret-color:var(--accent);color:transparent;-webkit-text-fill-color:transparent;padding:16px 18px 160px calc(var(--gw) + 22px);overscroll-behavior:contain;}
 #ta::selection{background:var(--sel);color:transparent;}
+/* custom caret: iPad Safari draws the native caret stretched up into the gap above every
+   line after the first, so it sits too high. The native caret is hidden and this one is
+   drawn on the text layer instead, centred on the glyphs of every line. */
+#ta.own-caret{caret-color:transparent;}
+#lines{position:relative;}
+#caret{position:absolute;left:0;top:0;width:2px;margin-left:-1px;border-radius:1px;background:var(--accent);pointer-events:none;display:none;animation:caretBlink 1.06s steps(1) infinite;}
+#caret.on{display:block;}
+@keyframes caretBlink{0%,50%{opacity:1;}50.01%,100%{opacity:0;}}
 #lines{counter-reset:ln;}
 .ln{counter-increment:ln;position:relative;padding-left:calc(var(--gw) + 22px);min-height:var(--lh);}
 .ln::before{content:counter(ln);position:absolute;left:8px;top:0;width:var(--gw);text-align:right;color:var(--gutter-fg);font-size:calc(var(--fs) - 2.5px);line-height:var(--lh);}
@@ -3318,8 +3326,8 @@ function buildHighlight(){
     html+=`<div class="ln">${body||"<br>"}</div>`;
   }
   if(v==="")html=`<div class="ln"><span class="tk-ghost"># hello, world — start typing…</span></div>`;
-  linesEl.innerHTML=html;
-  prevCur=-1;markCurLine();syncScroll();scheduleWrapCheck();
+  linesEl.innerHTML=html;linesEl.appendChild(caretEl);
+  prevCur=-1;markCurLine();syncScroll();scheduleWrapCheck();placeCaret();
 }
 function markCurLine(){
   const idx=ta.value.slice(0,ta.selectionStart).split("\n").length-1;
@@ -3345,6 +3353,46 @@ let _lastSX=null;
    layers on iPad), and the real wrapping width of the textarea is measured with an
    invisible probe: iOS insets textarea text by a few pixels (and desktop scrollbars take
    width), which makes long lines wrap earlier in the textarea than in the text layer. */
+const caretEl=document.createElement("div");caretEl.id="caret";caretEl.setAttribute("aria-hidden","true");
+let _caretRaf=0,_caretKey="";
+function scheduleCaret(){if(!_caretRaf)_caretRaf=requestAnimationFrame(()=>{_caretRaf=0;placeCaret();});}
+function nativeCaret(on){ta.classList.toggle("own-caret",!on);if(on){caretEl.classList.remove("on");_caretKey="";}}
+function placeCaret(){
+  const s=ta.selectionStart,e=ta.selectionEnd,v=ta.value;
+  if(document.activeElement!==ta||s!==e||!v){caretEl.classList.remove("on");_caretKey="";if(!v)nativeCaret(true);return;}
+  const ls=v.lastIndexOf("\n",s-1)+1,le=v.indexOf("\n",s),line=v.slice(ls,le<0?v.length:le);
+  const li=v.slice(0,ls).split("\n").length-1,col=s-ls;
+  const ln=linesEl.children[li];
+  /* safety: if the text layer does not hold exactly this line's text, use the native caret */
+  if(!ln||!ln.classList.contains("ln")||(line.length?ln.textContent!==line:ln.textContent!=="")){nativeCaret(true);return;}
+  const base=linesEl.getBoundingClientRect();
+  let x,top,h;
+  const range=document.createRange();
+  const at=k=>{ /* text node + offset for character index k of this line */
+    const w=document.createTreeWalker(ln,NodeFilter.SHOW_TEXT);let n,acc=0;
+    while(n=w.nextNode()){const L=n.nodeValue.length;if(k<acc+L)return[n,k-acc];acc+=L;}
+    return null;
+  };
+  const rectOf=k=>{const p=at(k);if(!p)return null;range.setStart(p[0],p[1]);range.setEnd(p[0],p[1]+1);
+    const rs=range.getClientRects();return rs.length?rs[0]:range.getBoundingClientRect();};
+  let r;
+  if(col<line.length&&(r=rectOf(col))&&r.height){x=r.left;top=r.top;h=r.height;}          /* before the next character */
+  else if(col>0&&(r=rectOf(col-1))&&r.height){x=r.right;top=r.top;h=r.height;}             /* end of line: after the last one */
+  else{ /* empty line: content box start, glyph-height bar centred in the line */
+    const lr=ln.getBoundingClientRect(),cs=getComputedStyle(ln),lh=parseFloat(getComputedStyle(ta).lineHeight)||lr.height;
+    const fs=parseFloat(cs.fontSize)||15;h=Math.round(fs*1.2);
+    x=lr.left+parseFloat(cs.paddingLeft);top=lr.top+(lh-h)/2;
+  }
+  x=Math.round((x-base.left)*2)/2;top=Math.round((top-base.top)*2)/2;h=Math.round(h);
+  nativeCaret(false);
+  const key=x+","+top+","+h;
+  if(key!==_caretKey){
+    caretEl.style.transform="translate("+x+"px,"+top+"px)";caretEl.style.height=h+"px";
+    caretEl.style.animation="none";void caretEl.offsetWidth;caretEl.style.animation=""; /* solid while moving */
+    _caretKey=key;
+  }
+  caretEl.classList.add("on");
+}
 let _wrapT=0,_wrapTA=null,_wrapDiv=null;
 function setEditorFontSize(px){
   workspace.style.setProperty("--fs",px+"px");
@@ -5199,6 +5247,8 @@ bindPdfUI();
   ta.addEventListener("touchmove",kickSync,{passive:true});
   ta.addEventListener("touchend",kickSync,{passive:true});
   ta.addEventListener("keyup",syncScroll);
+  ["input","keydown","keyup","click","focus","blur","select","compositionend"].forEach(t=>ta.addEventListener(t,scheduleCaret));
+  document.addEventListener("selectionchange",scheduleCaret);
   document.addEventListener("selectionchange",()=>{if(document.activeElement===ta)syncScroll();});
   [app,workspace,editorPane].forEach(el=>el.addEventListener("scroll",()=>{el.scrollTop=0;el.scrollLeft=0;syncScroll();},{passive:true}));
   const onMq=()=>{setSidebar(mqWide.matches);setTimeout(moveThumb,260);};
