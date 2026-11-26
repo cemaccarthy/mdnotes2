@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <!--
-  mdnotes — a markdown notes console for iPad  ·  v2.3
+  mdnotes — a markdown notes console for iPad  ·  v2.4
   ─────────────────────────────────────────────────────────────
   INSTALL (GitHub Pages + iPad Home Screen):
   1. Save this file as `index.html` in a GitHub repository.
@@ -546,6 +546,22 @@ div.wprobe{height:auto;}
 .tk-kw{color:var(--syn-kw);}
 .tk-fn{color:var(--syn-fn);}
 .tk-pu{color:var(--syn-punc);}
+/* nomnoml code blocks — coloured from each theme's own syntax palette */
+.nm-b{color:var(--syn-punc);font-weight:700;}
+.nm-n{color:var(--syn-fn);font-weight:700;}
+.nm-t{color:var(--syn-tag);font-style:italic;}
+.nm-p{color:var(--syn-punc);}
+.nm-v{color:var(--syn-kw);font-weight:700;}
+.nm-ty{color:var(--syn-key);}
+.nm-a{color:var(--syn-kw);font-weight:700;}
+.nm-l{color:var(--syn-str);}
+.nm-num{color:var(--syn-num);}
+.nm-c{color:var(--syn-com);font-style:italic;}
+.nm-dh{color:var(--syn-punc);}
+.nm-dk{color:var(--syn-key);}
+.nm-dv{color:var(--syn-str);}
+/* CRT themes stay monochrome: nomnoml text takes the plain text colour */
+html[data-group="crt"] .nm{color:inherit;font-weight:inherit;font-style:inherit;}
 #previewPane{flex:1;min-width:0;overflow-y:auto;overscroll-behavior:contain;padding:24px 26px 140px;}
 #app[data-mode="write"] #previewPane{display:none;}
 #app[data-mode="read"] #editorPane{display:none;}
@@ -757,7 +773,7 @@ body.is-focus #focusExit.show{opacity:1;pointer-events:auto;}
 <div id="app" data-mode="write" class="sb-closed">
   <aside id="sidebar" aria-label="Notes and folders">
     <div class="sb-top">
-      <div class="brand"><span class="pr">❯</span>mdnotes<span class="cursor">▍</span><span class="ver">v2.3</span></div>
+      <div class="brand"><span class="pr">❯</span>mdnotes<span class="cursor">▍</span><span class="ver">v2.4</span></div>
       <button id="sbClose" class="ib" aria-label="Close sidebar"></button>
     </div>
     <div class="sb-tools">
@@ -939,7 +955,7 @@ body.is-focus #focusExit.show{opacity:1;pointer-events:auto;}
     <button class="menu-row" id="setExportPDF" type="button"><span id="setPdfIco"></span><span class="mlab">Export all notes as PDF</span></button>
     <div class="pop-div"></div>
     <button class="menu-row" id="setReset" type="button"><span id="setResetIco"></span><span class="mlab">Reset preferences</span></button>
-    <div class="pop-foot" id="setStats">mdnotes v2.3 · stored on this device</div>
+    <div class="pop-foot" id="setStats">mdnotes v2.4 · stored on this device</div>
   </div>
 </div>
 <div id="popNote" class="pop" hidden></div>
@@ -3310,18 +3326,65 @@ function hlCode(src,lang){
   out+=esc(src.slice(last));
   return out;
 }
+/* ---- nomnoml: [Class|fields|methods], [<type> Name], arrows, #directives, // comments.
+   State carries across lines so multi-line classifiers keep their bracket depth. ---- */
+const NM_ARROW=/^(?:<:|<|\(o|\(|o|\+)?(?:-\/-|--|-)(?::>|>|o\)|\)|o|\+)?$/;
+function nmNew(){return{depth:0,name:false,colon:false,seg:true};}
+function nmSpan(c,t){return`<span class="nm nm-${c}">${esc(t)}</span>`;}
+function hlNomnoml(src,st){
+  let m;
+  if(st.depth===0){
+    if(/^\s*\/\//.test(src))return nmSpan("c",src);
+    if(m=src.match(/^(\s*)(#)([\w.\-]+)(\s*:)?(.*)$/))
+      return esc(m[1])+nmSpan("dh","#")+nmSpan("dk",m[3])+(m[4]?nmSpan("p",m[4]):"")+
+        (m[5]?(/^\s*(#[\da-f]{3,8}|[\d.]+)\s*$/i.test(m[5])?nmSpan("num",m[5]):nmSpan("dv",m[5])):"");
+  }
+  let out="",i=0,prevClose=false;
+  const N=src.length;
+  while(i<N){
+    const ch=src[i];
+    if(ch==="["){
+      out+=nmSpan("b","[");i++;st.depth++;st.colon=false;st.seg=true;
+      const t=src.slice(i).match(/^(\s*)(<[^>\]\[|]*>)/);
+      if(t){out+=esc(t[1])+nmSpan("t",t[2]);i+=t[0].length;}
+      st.name=true;prevClose=false;continue;
+    }
+    if(ch==="]"&&st.depth>0){out+=nmSpan("b","]");i++;st.depth--;st.name=false;st.colon=false;st.seg=false;prevClose=true;continue;}
+    if(st.depth>0&&(ch==="|"||ch===";")){out+=nmSpan("p",ch);i++;st.name=false;st.colon=false;st.seg=true;prevClose=false;continue;}
+    if(/\s/.test(ch)){const w=src.slice(i).match(/^\s+/)[0];out+=esc(w);i+=w.length;continue;}
+    if(st.depth>0&&st.name){
+      const t=src.slice(i).match(/^[^\[\]|;]+/)[0];
+      out+=nmSpan("n",t);i+=t.length;st.name=false;prevClose=false;continue;
+    }
+    /* a run of non-space characters up to the next bracket/separator */
+    const w=src.slice(i).match(st.depth>0?/^[^\s\[\]|;]+/:/^[^\s\[\]]+/)[0];
+    if((st.depth===0||prevClose)&&NM_ARROW.test(w)){out+=nmSpan("a",w);}
+    else if(st.depth===0){out+=/^[\d.*]+$/.test(w)?nmSpan("num",w):nmSpan("l",w);}
+    else{
+      let k=0;
+      if(st.seg&&/^[+\-#~]/.test(w)&&w.length>1){out+=nmSpan("v",w[0]);k=1;}
+      st.seg=false;
+      const rest=w.slice(k),ci=st.colon?-1:rest.indexOf(":");
+      if(st.colon)out+=nmSpan("ty",rest);
+      else if(ci>=0){out+=esc(rest.slice(0,ci))+nmSpan("p",":")+(ci+1<rest.length?nmSpan("ty",rest.slice(ci+1)):"");st.colon=true;}
+      else out+=esc(rest).replace(/[()]/g,c=>`<span class="nm nm-p">${c}</span>`);
+    }
+    i+=w.length;prevClose=false;
+  }
+  return out;
+}
 const ta=$("ta"),hl=$("hl"),linesEl=$("lines"),editorPane=$("editorPane");
 function buildHighlight(){
   const v=ta.value,ls=v.split("\n");
   editorPane.style.setProperty("--gw",Math.max(2,String(ls.length).length)+"ch");
-  let fence=null,html="";
+  let fence=null,html="",nm=null;
   for(const raw of ls){
     let body;
     const fm=raw.match(/^(\s*)(`{3,}|~{3,})(.*)$/);
     if(fm){
-      if(fence===null){fence=fm[3].trim();body=`<span class="tk-fence">${esc(fm[1]+fm[2])}</span><span class="tk-lang">${esc(fm[3])}</span>`;}
+      if(fence===null){fence=fm[3].trim();nm=fence.toLowerCase()==="nomnoml"?nmNew():null;body=`<span class="tk-fence">${esc(fm[1]+fm[2])}</span><span class="tk-lang">${esc(fm[3])}</span>`;}
       else{fence=null;body=`<span class="tk-fence">${esc(raw)}</span>`;}
-    }else if(fence!==null){body=hlCode(raw,fence);}
+    }else if(fence!==null){body=nm?hlNomnoml(raw,nm):hlCode(raw,fence);}
     else body=mdLine(raw);
     html+=`<div class="ln">${body||"<br>"}</div>`;
   }
@@ -4324,7 +4387,7 @@ function updateStats(){
   const kb=(new Blob([JSON.stringify(notes)]).size/1024).toFixed(1);
   $("storeStats").textContent=`${notes.length} notes · ${folders.length} folders · ${kb} KB`;
   const mb=(imgBytes()/1048576).toFixed(1);
-  $("setStats").textContent=`mdnotes v2.3 · ${notes.length} notes · ${folders.length} folders · ${kb} KB text · ${IMG.size} images (${mb} MB)`;
+  $("setStats").textContent=`mdnotes v2.4 · ${notes.length} notes · ${folders.length} folders · ${kb} KB text · ${IMG.size} images (${mb} MB)`;
 }
 function updateCounts(){
   const v=ta.value,w=(v.match(/\S+/g)||[]).length;
@@ -4724,6 +4787,7 @@ function setTheme(id){
   prefs.theme=id;
   document.documentElement.dataset.theme=id;
   const t=THEMES.find(x=>x.id===id)||THEMES[0];
+  document.documentElement.dataset.group=t.group;
   $("metaTheme").content=t.dots[0];
   $("stTheme").textContent=t.name.toLowerCase();
   syncThemeRows();markDirty();
@@ -4868,6 +4932,104 @@ function wrap(l,r,ph){
   }
   const body=sel||ph;
   replaceRange(s,e,l+body+r,s+l.length,s+l.length+body.length);
+}
+/* ---- auto-pairing ----
+   Typing an opening bracket or a markdown wrapper inserts its partner and puts the caret
+   between them; a selection gets wrapped instead. Typing the same marker again inside an
+   empty pair grows it (* → ** → ***), typing a closer that is already there steps over it,
+   a space straight after an opening marker drops the partner (so "* " still starts a list
+   and "a == b" stays plain), and Backspace in an empty pair removes both halves.
+   Typing ``` at the start of a line outside a code block opens a fenced block and adds the
+   closing ``` two lines down. */
+const AP_BR={"(":")","[":"]","{":"}"};
+const AP_MARK="*_`",AP_DBL="~=";
+let _apBusy=false;
+function apInFence(v,pos){
+  const a=v.lastIndexOf("\n",pos-1)+1;
+  return((v.slice(0,a).match(/^\s*(```|~~~)/gm)||[]).length)%2===1;
+}
+function apInInlineCode(v,pos){
+  const a=v.lastIndexOf("\n",pos-1)+1;
+  return((v.slice(a,pos).match(/`/g)||[]).length)%2===1;
+}
+const apOpenOK=c=>c===undefined||c===""||/[\s(\[{"'>]/.test(c);
+const apCloseOK=c=>c===undefined||c===""||/[\s)\]}.,;:!?'"*_~=`]/.test(c);
+function apEdit(a,b,text,caret){_apBusy=true;try{replaceRange(a,b,text,caret,caret);}finally{_apBusy=false;}}
+function apWrapSel(l,r){
+  const s=ta.selectionStart,e=ta.selectionEnd,sel=ta.value.slice(s,e);
+  _apBusy=true;try{replaceRange(s,e,l+sel+r,s+l.length,s+l.length+sel.length);}finally{_apBusy=false;}
+}
+function autoPair(ev){
+  if(_apBusy||ev.isComposing)return;
+  const v=ta.value,s=ta.selectionStart,e=ta.selectionEnd;
+  if(ev.inputType==="deleteContentBackward"){
+    if(s!==e||s===0)return;
+    const a=v[s-1],b=v[s];
+    if((AP_BR[a]&&AP_BR[a]===b)||(a===b&&(AP_MARK+AP_DBL).includes(a)&&!apInFence(v,s))){
+      if(a==="~"||a==="="){ /* ~~|~~ → remove both doubles */
+        if(v.slice(s-2,s)===a+a&&v.slice(s,s+2)===a+a){ev.preventDefault();apEdit(s-2,s+2,"",s-2);}
+        return;
+      }
+      ev.preventDefault();apEdit(s-1,s+1,"",s-1);
+    }
+    return;
+  }
+  if(ev.inputType!=="insertText"||!ev.data||ev.data.length!==1)return;
+  const ch=ev.data,prev=v[s-1],next=v[s];
+  const fence=apInFence(v,s),code=fence||apInInlineCode(v,s);
+  /* wrap a selection */
+  if(s!==e){
+    if(AP_BR[ch]){ev.preventDefault();apWrapSel(ch,AP_BR[ch]);return;}
+    if(!fence&&AP_MARK.includes(ch)){ev.preventDefault();apWrapSel(ch,ch);return;}
+    if(!fence&&AP_DBL.includes(ch)){ev.preventDefault();apWrapSel(ch+ch,ch+ch);return;}
+    return;
+  }
+  /* step over a closer that is already there */
+  if(")]}".includes(ch)&&next===ch){ev.preventDefault();ta.setSelectionRange(s+1,s+1);scheduleCaret();return;}
+  /* brackets pair everywhere, code included */
+  if(AP_BR[ch]){
+    if(!apCloseOK(next))return;
+    ev.preventDefault();apEdit(s,s,ch+AP_BR[ch],s+1);return;
+  }
+  /* space right after an opening marker: not formatting after all, drop the partner */
+  if(ch===" "&&!code){
+    const L=v.slice(0,s).match(/(\*{1,3}|_{1,3}|~~|==)$/),R=L&&v.slice(s,s+L[1].length);
+    if(L&&R===L[1]){ev.preventDefault();apEdit(s,s+R.length," ",s+1);}
+    return;
+  }
+  if(fence)return;
+  if(ch==="`"){
+    const ls=v.lastIndexOf("\n",s-1)+1;let le=v.indexOf("\n",s);if(le<0)le=v.length;
+    const before=v.slice(ls,s),after=v.slice(s,le);
+    /* third backtick at the start of a line → fenced code block with its closing fence */
+    if(/^\s*``$/.test(before)&&(after===""||after==="``")){
+      ev.preventDefault();
+      const ind=before.match(/^\s*/)[0];
+      apEdit(ls,le,ind+"```\n"+ind+"\n"+ind+"```",ls+ind.length+3);return;
+    }
+    if(prev==="`"&&next==="`"){ev.preventDefault();apEdit(s,s,"``",s+1);return;}  /* `|` → ``|`` */
+    if(next==="`"){ev.preventDefault();ta.setSelectionRange(s+1,s+1);scheduleCaret();return;}
+    if(apOpenOK(prev)&&apCloseOK(next)){ev.preventDefault();apEdit(s,s,"``",s+1);}
+    return;
+  }
+  if(code)return;
+  if(ch==="*"||ch==="_"){
+    const L=v.slice(0,s).match(ch==="*"?/\*+$/:/_+$/),R=v.slice(s).match(ch==="*"?/^\*+/:/^_+/);
+    const ln=L?L[0].length:0,rn=R?R[0].length:0;
+    if(ln&&ln===rn&&apOpenOK(v[s-ln-1])){ /* empty pair: grow it, up to *** */
+      if(ln<3){ev.preventDefault();apEdit(s,s,ch+ch,s+1);}
+      return;
+    }
+    if(rn){ev.preventDefault();ta.setSelectionRange(s+1,s+1);scheduleCaret();return;}
+    if(!ln&&apOpenOK(prev)&&apCloseOK(next)){ev.preventDefault();apEdit(s,s,ch+ch,s+1);}
+    return;
+  }
+  if(ch==="~"||ch==="="){
+    if(next===ch&&v.slice(s-2,s)!==ch+ch){ev.preventDefault();ta.setSelectionRange(s+1,s+1);scheduleCaret();return;}
+    /* second ~ / = after a word boundary: ~~|~~ / ==|== */
+    if(prev===ch&&v[s-2]!==ch&&apOpenOK(v[s-2])&&apCloseOK(next)){ev.preventDefault();apEdit(s,s,ch+ch+ch,s+1);}
+    return;
+  }
 }
 function lineRange(){
   const v=ta.value,s=ta.selectionStart,e=ta.selectionEnd;
@@ -5152,6 +5314,7 @@ bindPdfUI();
     const fs=[...(e.clipboardData&&e.clipboardData.files||[])].filter(f=>/^image\//.test(f.type));
     if(fs.length){e.preventDefault();insertImages(fs);}
   });
+  ta.addEventListener("beforeinput",autoPair);
   ta.addEventListener("keydown",e=>{
     if(e.isComposing)return;
     if(e.key==="Tab"){
@@ -5166,7 +5329,14 @@ bindPdfUI();
     if(e.key==="Enter"&&!e.shiftKey&&!e.metaKey&&!e.ctrlKey&&!e.altKey&&ta.selectionStart===ta.selectionEnd){
       const v=ta.value,s=ta.selectionStart,a=v.lastIndexOf("\n",s-1)+1,line=v.slice(a,s);
       const fences=(v.slice(0,s).match(/^\s*(```|~~~)/gm)||[]).length;
-      if(fences%2===1)return;
+      if(fences%2===1){
+        const le=v.indexOf("\n",s);
+        if(/^\s*(```|~~~)/.test(line)&&le===s){
+          const ind=line.match(/^\s*/)[0],mk=line.trim().slice(0,3);
+          if(v.startsWith("\n"+ind+"\n"+ind+mk,s)){e.preventDefault();const c=s+1+ind.length;ta.setSelectionRange(c,c);markCurLine();updatePos();scheduleCaret();}
+        }
+        return;
+      }
       const m=/^(\s*)(?:(\d+)([.)])|([-*+]|>))\s+(\[[ xX]\]\s+)?/.exec(line);
       if(!m)return;
       e.preventDefault();
