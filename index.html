@@ -4939,9 +4939,13 @@ function wrap(l,r,ph){
    empty pair grows it (* → ** → ***), typing a closer that is already there steps over it,
    a space straight after an opening marker drops the partner (so "* " still starts a list
    and "a == b" stays plain), and Backspace in an empty pair removes both halves.
+   Quotes ("" '' “” ‘’) pair when they start a word, so apostrophes (don't) are left alone.
+   < pairs with >, but "<" followed by a space, -, =, : or < drops the > again so
+   comparisons (a < b, <=) and nomnoml arrows (<-, <:-) stay as typed.
    Typing ``` at the start of a line outside a code block opens a fenced block and adds the
-   closing ``` two lines down. */
-const AP_BR={"(":")","[":"]","{":"}"};
+   closing ``` on the next line, so Enter puts the caret inside the block. */
+const AP_BR={"(":")","[":"]","{":"}","<":">"};
+const AP_Q={'"':'"',"'":"'","\u201c":"\u201d","\u2018":"\u2019"};
 const AP_MARK="*_`",AP_DBL="~=";
 let _apBusy=false;
 function apInFence(v,pos){
@@ -4965,7 +4969,7 @@ function autoPair(ev){
   if(ev.inputType==="deleteContentBackward"){
     if(s!==e||s===0)return;
     const a=v[s-1],b=v[s];
-    if((AP_BR[a]&&AP_BR[a]===b)||(a===b&&(AP_MARK+AP_DBL).includes(a)&&!apInFence(v,s))){
+    if((AP_BR[a]&&AP_BR[a]===b)||(AP_Q[a]&&AP_Q[a]===b)||(a===b&&(AP_MARK+AP_DBL).includes(a)&&!apInFence(v,s))){
       if(a==="~"||a==="="){ /* ~~|~~ → remove both doubles */
         if(v.slice(s-2,s)===a+a&&v.slice(s,s+2)===a+a){ev.preventDefault();apEdit(s-2,s+2,"",s-2);}
         return;
@@ -4980,12 +4984,20 @@ function autoPair(ev){
   /* wrap a selection */
   if(s!==e){
     if(AP_BR[ch]){ev.preventDefault();apWrapSel(ch,AP_BR[ch]);return;}
+    if(AP_Q[ch]){ev.preventDefault();apWrapSel(ch,AP_Q[ch]);return;}
     if(!fence&&AP_MARK.includes(ch)){ev.preventDefault();apWrapSel(ch,ch);return;}
     if(!fence&&AP_DBL.includes(ch)){ev.preventDefault();apWrapSel(ch+ch,ch+ch);return;}
     return;
   }
   /* step over a closer that is already there */
-  if(")]}".includes(ch)&&next===ch){ev.preventDefault();ta.setSelectionRange(s+1,s+1);scheduleCaret();return;}
+  if(")]}>\"'\u201d\u2019".includes(ch)&&next===ch){ev.preventDefault();ta.setSelectionRange(s+1,s+1);scheduleCaret();return;}
+  /* "<" turned out to be a comparison or an arrow: drop the auto-added ">" */
+  if(prev==="<"&&next===">"&&" -=:<".includes(ch)){ev.preventDefault();apEdit(s,s+1,ch,s+1);return;}
+  /* quotes pair at the start of a word, code included */
+  if(AP_Q[ch]){
+    if(!apOpenOK(prev)||!apCloseOK(next))return;
+    ev.preventDefault();apEdit(s,s,ch+AP_Q[ch],s+1);return;
+  }
   /* brackets pair everywhere, code included */
   if(AP_BR[ch]){
     if(!apCloseOK(next))return;
@@ -5005,7 +5017,7 @@ function autoPair(ev){
     if(/^\s*``$/.test(before)&&(after===""||after==="``")){
       ev.preventDefault();
       const ind=before.match(/^\s*/)[0];
-      apEdit(ls,le,ind+"```\n"+ind+"\n"+ind+"```",ls+ind.length+3);return;
+      apEdit(ls,le,ind+"```\n"+ind+"```",ls+ind.length+3);return;
     }
     if(prev==="`"&&next==="`"){ev.preventDefault();apEdit(s,s,"``",s+1);return;}  /* `|` → ``|`` */
     if(next==="`"){ev.preventDefault();ta.setSelectionRange(s+1,s+1);scheduleCaret();return;}
@@ -5329,14 +5341,7 @@ bindPdfUI();
     if(e.key==="Enter"&&!e.shiftKey&&!e.metaKey&&!e.ctrlKey&&!e.altKey&&ta.selectionStart===ta.selectionEnd){
       const v=ta.value,s=ta.selectionStart,a=v.lastIndexOf("\n",s-1)+1,line=v.slice(a,s);
       const fences=(v.slice(0,s).match(/^\s*(```|~~~)/gm)||[]).length;
-      if(fences%2===1){
-        const le=v.indexOf("\n",s);
-        if(/^\s*(```|~~~)/.test(line)&&le===s){
-          const ind=line.match(/^\s*/)[0],mk=line.trim().slice(0,3);
-          if(v.startsWith("\n"+ind+"\n"+ind+mk,s)){e.preventDefault();const c=s+1+ind.length;ta.setSelectionRange(c,c);markCurLine();updatePos();scheduleCaret();}
-        }
-        return;
-      }
+      if(fences%2===1)return;
       const m=/^(\s*)(?:(\d+)([.)])|([-*+]|>))\s+(\[[ xX]\]\s+)?/.exec(line);
       if(!m)return;
       e.preventDefault();
